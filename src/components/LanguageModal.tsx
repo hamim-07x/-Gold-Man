@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { X } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { t } from '../lib/i18n';
 
 interface LanguageModalProps {
   isOpen: boolean;
@@ -9,33 +10,25 @@ interface LanguageModalProps {
 }
 
 const languages = [
-  { id: 'ar', name: 'العربية', flag: '🇸🇦' },
-  { id: 'he', name: 'עברית', flag: '🇮🇱' },
-  { id: 'ko', name: '한국어', flag: '🇰🇷' },
-  { id: 'fa', name: 'فارسی', flag: '🇮🇷' },
-  { id: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' },
-  { id: 'ms', name: 'Bahasa Melayu', flag: '🇲🇾' },
-  { id: 'pt', name: 'Português', flag: '🇵🇹' },
-  { id: 'de', name: 'Deutsch', flag: '🇩🇪' },
-  { id: 'it', name: 'Italiano', flag: '🇮🇹' },
-  { id: 'ur', name: 'اردو', flag: '🇵🇰' },
+  { id: 'en', name: 'English', flag: '🇬🇧' },
+  { id: 'bn', name: 'বাংলা', flag: '🇧🇩' },
   { id: 'hi', name: 'हिन्दी', flag: '🇮🇳' },
-  { id: 'zh', name: '中文', flag: '🇨🇳' },
-  { id: 'ja', name: '日本語', flag: '🇯🇵' },
-  { id: 'id', name: 'Bahasa Indonesia', flag: '🇮🇩' },
-  { id: 'tl', name: 'Filipino', flag: '🇵🇭' },
-  { id: 'pt-br', name: 'Português (Brasil)', flag: '🇧🇷' },
-  { id: 'fr', name: 'Français', flag: '🇫🇷' },
+  { id: 'ar', name: 'العربية', flag: '🇸🇦' },
   { id: 'es', name: 'Español', flag: '🇪🇸' },
   { id: 'ru', name: 'Русский', flag: '🇷🇺' },
-  { id: 'en', name: 'English', flag: '🇬🇧' },
+  { id: 'fr', name: 'Français', flag: '🇫🇷' },
+  { id: 'zh', name: '中文', flag: '🇨🇳' },
+  { id: 'pt', name: 'Português', flag: '🇵🇹' },
+  { id: 'ja', name: '日本語', flag: '🇯🇵' },
+  { id: 'ko', name: '한국어', flag: '🇰🇷' },
+  { id: 'id', name: 'Bahasa', flag: '🇮🇩' },
 ];
 
 export function LanguageModal({ isOpen, onClose }: LanguageModalProps) {
   const { language, setLanguage } = useAppStore();
 
-  const handleSelect = (lang: string) => {
-    setLanguage(lang);
+  const handleSelect = (langId: string) => {
+    setLanguage(langId);
     onClose();
   };
 
@@ -48,40 +41,40 @@ export function LanguageModal({ isOpen, onClose }: LanguageModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[60]"
+            className="fixed inset-0 bg-black/50 backdrop-blur-[10px] z-[60]"
           />
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-0 right-0 bg-[#0A0A0F]/90 backdrop-blur-[40px] border-t border-white/10 rounded-t-[2.5rem] p-6 z-[70] max-h-[85vh] overflow-hidden flex flex-col"
+            className="fixed bottom-0 left-2 right-2 bg-gradient-to-b from-[#121218]/80 to-[#050505]/90 backdrop-blur-[50px] @supports(backdrop-filter:blur(50px)){backdrop-saturate-150} border-[0.5px] border-white/10 rounded-[28px] rounded-bl-[16px] rounded-br-[16px] p-4 z-[70] max-h-[85vh] overflow-hidden flex flex-col mb-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_-10px_40px_rgba(0,0,0,0.5)]"
           >
-            <div className="w-12 h-1 bg-white/20 rounded-full mx-auto mb-6" />
+            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
             
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-display font-semibold">Language</h2>
-              <button onClick={onClose} className="p-2 bg-white/5 rounded-full hover:bg-white/10 transition">
-                <X className="w-5 h-5" />
+            <div className="flex justify-between items-center mb-3 px-1">
+              <h2 className="text-[17px] font-medium tracking-wide">{t(language, 'language')}</h2>
+              <button onClick={onClose} className="p-1.5 bg-white/5 rounded-full hover:bg-white/10 transition border border-white/5">
+                <X className="w-4 h-4 text-white/70" strokeWidth={1.5} />
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto pb-8 custom-scrollbar">
-              <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+            <div className="flex-1 overflow-y-auto pb-2 custom-scrollbar px-1">
+              <div className="grid grid-cols-4 gap-2">
                 {languages.map((lang) => {
-                  const isActive = language === lang.name;
+                  const isActive = language === lang.id;
                   return (
                     <button
                       key={lang.id}
-                      onClick={() => handleSelect(lang.name)}
-                      className={`flex flex-col items-center justify-center p-4 rounded-2xl border transition-all ${
+                      onClick={() => handleSelect(lang.id)}
+                      className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all active:scale-95 aspect-square ${
                         isActive 
-                          ? 'bg-brand/20 border-brand text-white shadow-[0_0_15px_rgba(99,102,241,0.3)]' 
-                          : 'bg-glass-100 border-white/5 text-white/60 hover:bg-glass-200 hover:text-white'
+                          ? 'bg-brand/10 border-brand-light/40 text-white shadow-[0_0_15px_rgba(96,165,250,0.15)] ring-1 ring-brand-light/50' 
+                          : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                       }`}
                     >
-                      <span className="text-2xl mb-2">{lang.flag}</span>
-                      <span className="text-xs font-medium text-center">{lang.name}</span>
+                      <span className="text-xl mb-1.5 drop-shadow-md leading-none">{lang.flag}</span>
+                      <span className="text-[10px] sm:text-[11px] font-medium text-center tracking-wide leading-tight">{lang.name}</span>
                     </button>
                   );
                 })}

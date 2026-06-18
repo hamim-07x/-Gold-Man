@@ -46,7 +46,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   isInitialized: false,
   currentUser: null,
   isAdmin: false,
-  language: 'English',
+  language: 'en',
   setLanguage: (lang) => set({ language: lang }),
   
   initSession: (tgUser, startParam) => {

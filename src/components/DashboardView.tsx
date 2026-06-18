@@ -2,31 +2,32 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Shield, Zap, TrendingUp } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { t } from '../lib/i18n';
 
 export function DashboardView() {
-  const { currentUser } = useAppStore();
+  const { currentUser, language } = useAppStore();
 
   return (
-    <div className="flex flex-col gap-6 px-6 pt-24 pb-32 min-h-screen">
+    <div className="flex flex-col gap-4 px-4 pt-20 pb-28 min-h-[100dvh]">
       <motion.div 
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-8 text-center relative overflow-hidden"
+        className="glass-card p-6 text-center relative overflow-hidden"
       >
-        <div className="absolute top-0 right-0 w-64 h-64 bg-brand/10 blur-[60px] rounded-full pointer-events-none -mr-32 -mt-32" />
-        <h1 className="text-3xl font-display font-medium mb-2">Welcome Back</h1>
-        <p className="text-white/60 mb-6">Track your portfolio and daily earnings</p>
+        <div className="absolute top-0 right-0 w-48 h-48 bg-brand-light/20 blur-[50px] rounded-full pointer-events-none -mr-24 -mt-24" />
+        <h1 className="text-xl font-medium mb-1 tracking-wide text-white/90">{t(language, 'welcome')}</h1>
+        <p className="text-white/40 text-xs mb-6 tracking-wider uppercase">{t(language, 'portfolio')}</p>
         
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 gap-3">
           <div className="glass-panel p-4 rounded-2xl flex flex-col items-center">
-            <Zap className="w-6 h-6 text-yellow-400 mb-2" />
-            <span className="text-sm text-white/50 mb-1">Energy limit</span>
-            <span className="font-bold text-xl">100/100</span>
+            <Zap className="w-5 h-5 text-amber-400 mb-2" strokeWidth={1.5} />
+            <span className="text-[10px] text-white/40 mb-1 uppercase tracking-widest">{t(language, 'energy')}</span>
+            <span className="font-medium text-[17px] tracking-wide">100/100</span>
           </div>
           <div className="glass-panel p-4 rounded-2xl flex flex-col items-center">
-            <TrendingUp className="w-6 h-6 text-green-400 mb-2" />
-            <span className="text-sm text-white/50 mb-1">Total Earned</span>
-            <span className="font-bold text-xl">${(currentUser?.referralsCount || 0) * 10}</span>
+            <TrendingUp className="w-5 h-5 text-emerald-400 mb-2" strokeWidth={1.5} />
+            <span className="text-[10px] text-white/40 mb-1 uppercase tracking-widest">{t(language, 'total')}</span>
+            <span className="font-medium text-[17px] text-emerald-400/90 tracking-wide">${(currentUser?.referralsCount || 0) * 10}</span>
           </div>
         </div>
       </motion.div>

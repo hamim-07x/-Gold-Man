@@ -17,10 +17,10 @@ export function Navigation({ currentTab, onChange }: NavigationProps) {
   ];
 
   return (
-    <div className="fixed bottom-0 left-0 right-0 p-6 flex justify-between items-end z-40 pointer-events-none">
+    <div className="fixed bottom-0 left-0 right-0 p-3 flex justify-between items-end z-40 pointer-events-none">
       
       {/* Main Nav Container */}
-      <div className="glass-card rounded-[2rem] px-6 py-4 flex items-center justify-between gap-6 pointer-events-auto">
+      <div className="glass-card rounded-[24px] px-4 py-2 flex items-center justify-between gap-4 pointer-events-auto flex-1 mr-3 h-[56px] shadow-[0_8px_32px_rgba(0,0,0,0.4)]">
         {tabs.map((tab) => {
           const Icon = tab.icon;
           const isActive = currentTab === tab.id;
@@ -29,15 +29,15 @@ export function Navigation({ currentTab, onChange }: NavigationProps) {
               key={tab.id}
               onClick={() => onChange(tab.id)}
               className={cn(
-                "relative p-2 rounded-full transition-colors",
-                isActive ? "text-brand-light" : "text-white/40 hover:text-white/60"
+                "relative p-1.5 rounded-full transition-all duration-300 flex flex-col items-center justify-center w-10 h-10",
+                isActive ? "text-brand-light" : "text-white/40 hover:text-white/70"
               )}
             >
-              <Icon className="w-6 h-6" strokeWidth={isActive ? 2.5 : 2} />
+              <Icon className="w-[22px] h-[22px]" strokeWidth={isActive ? 2 : 1.5} />
               {isActive && (
                 <motion.div 
                   layoutId="navIndicator"
-                  className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-1.5 h-1.5 rounded-full bg-brand-light"
+                  className="absolute bottom-0 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-brand-light shadow-[0_0_8px_theme(colors.brand.light)]"
                 />
               )}
             </button>
@@ -45,17 +45,17 @@ export function Navigation({ currentTab, onChange }: NavigationProps) {
         })}
       </div>
 
-      {/* Floating Action Button for Profile or specific action */}
+      {/* Floating Action Button */}
       <button 
         onClick={() => onChange('profile')}
         className={cn(
-          "w-14 h-14 rounded-full flex items-center justify-center transition-transform active:scale-95 pointer-events-auto shadow-2xl",
+          "w-[56px] h-[56px] rounded-[24px] flex items-center justify-center transition-all active:scale-95 pointer-events-auto backdrop-blur-[40px] @supports(backdrop-filter:blur(40px)){backdrop-saturate-150} border-[0.5px] border-white/10 shadow-[inner_0_1px_1px_rgba(255,255,255,0.15),0_8px_32px_rgba(0,0,0,0.4)] flex-shrink-0",
           currentTab === 'profile' 
             ? "bg-brand text-white" 
-            : "bg-[#2A2B3D] text-brand-light"
+            : "bg-[#2563eb]/20 text-brand-light hover:bg-[#2563eb]/30"
         )}
       >
-        <UserPlus className="w-6 h-6" strokeWidth={2} />
+        <UserPlus className="w-[22px] h-[22px]" strokeWidth={1.5} />
       </button>
 
     </div>
