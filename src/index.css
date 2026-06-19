@@ -1,24 +1,28 @@
 @import "tailwindcss";
 
 @theme {
-  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif;
-  --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", sans-serif;
-  
   --color-glass-100: rgba(255, 255, 255, 0.05);
   --color-glass-200: rgba(255, 255, 255, 0.1);
   --color-glass-300: rgba(255, 255, 255, 0.2);
   --color-glass-400: rgba(255, 255, 255, 0.3);
   --color-glass-stroke: rgba(255, 255, 255, 0.1);
 
-  --color-app-bg: #050505;
-  --color-app-dark: #050505;
-  --color-brand: #2563eb; /* Tailwind blue-600 */
-  --color-brand-light: #60a5fa; /* Tailwind blue-400 */
+  --color-app-bg: #030014;
+  --color-app-dark: #030014;
+  
+  --color-brand: #8b5cf6; /* violet-500 */
+  --color-brand-light: #c084fc; /* purple-400 */
+  --color-accent: #06b6d4; /* cyan-500 */
+  --color-accent-light: #2dd4bf; /* teal-400 */
+  --color-glow-pink: #ec4899;
 }
 
 @layer base {
   body {
     @apply bg-app-bg text-white font-sans antialiased overflow-x-hidden h-full;
+    background-image: 
+      radial-gradient(circle at 15% 50%, rgba(139, 92, 246, 0.15), transparent 25%),
+      radial-gradient(circle at 85% 30%, rgba(6, 182, 212, 0.15), transparent 25%);
   }
   html {
     @apply h-full m-0;
@@ -27,25 +31,26 @@
 
 @layer utilities {
   .glass-panel {
-    background-color: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12), 0 4px 24px rgba(0, 0, 0, 0.15);
+    background-color: rgba(10, 5, 30, 0.4);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 8px 32px rgba(0, 0, 0, 0.5);
   }
   
   .glass-button {
-    background-color: rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(40px) saturate(150%);
-    -webkit-backdrop-filter: blur(40px) saturate(150%);
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(40px) saturate(200%);
+    -webkit-backdrop-filter: blur(40px) saturate(200%);
     border: 0.5px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.1);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 4px 16px rgba(0, 0, 0, 0.2);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 16px;
   }
   
   .glass-button:hover {
-    background-color: rgba(255, 255, 255, 0.08);
+    background-color: rgba(255, 255, 255, 0.1);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.2), 0 6px 20px rgba(139, 92, 246, 0.2);
   }
   
   .glass-button:active {
@@ -53,16 +58,15 @@
   }
 
   .glass-card {
-    background-color: rgba(255, 255, 255, 0.03);
-    backdrop-filter: blur(50px) saturate(150%);
-    -webkit-backdrop-filter: blur(50px) saturate(150%);
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.12), 0 8px 32px rgba(0, 0, 0, 0.3);
+    background-color: rgba(15, 10, 40, 0.5);
+    backdrop-filter: blur(60px) saturate(200%);
+    -webkit-backdrop-filter: blur(60px) saturate(200%);
+    border: 0.5px solid rgba(255, 255, 255, 0.08);
+    box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1), 0 10px 40px rgba(0, 0, 0, 0.4);
     border-radius: 32px;
   }
 }
 
-/* Custom Scrollbar for a premium look, though usually hidden on mobile */
 ::-webkit-scrollbar {
   width: 0px;
   background: transparent;

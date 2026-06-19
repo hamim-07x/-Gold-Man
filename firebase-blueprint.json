@@ -1,0 +1,73 @@
+{
+  "collections": [
+    {
+      "name": "users",
+      "fields": [
+        { "name": "id", "type": "string" },
+        { "name": "telegramId", "type": "number", "optional": true },
+        { "name": "username", "type": "string", "optional": true },
+        { "name": "firstName", "type": "string", "optional": true },
+        { "name": "lastName", "type": "string", "optional": true },
+        { "name": "photoUrl", "type": "string", "optional": true },
+        { "name": "balance", "type": "number" },
+        { "name": "xpBalance", "type": "number" },
+        { "name": "usdcBalance", "type": "number" },
+        { "name": "miningStartedAt", "type": "number", "optional": true },
+        { "name": "joinNumber", "type": "number" },
+        { "name": "joinedAt", "type": "number" },
+        { "name": "referralsCount", "type": "number" },
+        { "name": "referredBy", "type": "string", "optional": true }
+      ],
+      "rules": [
+        {
+          "type": "allow",
+          "operations": ["read", "write"],
+          "condition": "request.auth != null"
+        }
+      ]
+    },
+    {
+      "name": "transactions",
+      "fields": [
+        { "name": "userId", "type": "string" },
+        { "name": "type", "type": "string" },
+        { "name": "amount", "type": "number" },
+        { "name": "currency", "type": "string", "optional": true },
+        { "name": "timestamp", "type": "number" },
+        { "name": "status", "type": "string" }
+      ],
+      "rules": [
+        {
+          "type": "allow",
+          "operations": ["read"],
+          "condition": "request.auth != null && request.auth.uid == resource.data.userId"
+        },
+        {
+          "type": "allow",
+          "operations": ["create"],
+          "condition": "request.auth != null && request.auth.uid == request.resource.data.userId"
+        }
+      ]
+    },
+    {
+      "name": "events",
+      "fields": [
+        { "name": "title", "type": "string" },
+        { "name": "reward", "type": "number" },
+        { "name": "active", "type": "boolean" }
+      ],
+      "rules": [
+        {
+          "type": "allow",
+          "operations": ["read"],
+          "condition": "request.auth != null"
+        },
+        {
+          "type": "allow",
+          "operations": ["write"],
+          "condition": "request.auth != null"
+        }
+      ]
+    }
+  ]
+}

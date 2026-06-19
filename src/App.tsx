@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Bell, Menu, ShieldAlert } from 'lucide-react';
-import { useAppStore } from './store/useAppStore';
+import { ShieldAlert, Menu, Bell, Plus, Calendar, Users, RefreshCw } from 'lucide-react';
+import { useAppStore, dbHelpers } from './store/useAppStore';
 import { cn } from './lib/utils';
 import { t } from './lib/i18n';
 
-import { MathCaptcha } from './components/MathCaptcha';
 import { Navigation } from './components/Navigation';
 import { Sidebar } from './components/Sidebar';
 import { WalletView } from './components/WalletView';
 import { DashboardView } from './components/DashboardView';
+import { FriendsView } from './components/FriendsView';
+import { GlobalToast } from './components/GlobalToast';
+
+import { AdminPanel } from './components/AdminPanel';
 
 function SplashScreen({ onFinish }: { onFinish: () => void }) {
   useEffect(() => {
@@ -41,12 +44,55 @@ function SplashScreen({ onFinish }: { onFinish: () => void }) {
 }
 
 export default function App() {
-  const { isInitialized, initSession, isAdmin, adminLogin, language } = useAppStore();
+  const { isInitialized, initSession, language, adminLogin } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
-  const [captchaSolved, setCaptchaSolved] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [currentTab, setCurrentTab] = useState('wallet');
+  const [currentTab, setCurrentTab] = useState('dashboard');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+
+  // Pull-to-refresh state
+  const [startY, setStartY] = useState(0);
+  const [pullingDistance, setPullingDistance] = useState(0);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    // Top of the document check
+    if (window.scrollY <= 5 && !isRefreshing) {
+       setStartY(e.touches[0].clientY);
+    } else {
+       setStartY(0);
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (startY === 0) return;
+    const currentY = e.touches[0].clientY;
+    const distance = currentY - startY;
+
+    if (distance > 0) {
+      // Prevent overscroll browser behavior if we are pulling down
+      if (e.cancelable) e.preventDefault();
+      
+      const dampenedDistance = Math.min(distance * 0.4, 80);
+      setPullingDistance(dampenedDistance);
+    }
+  };
+
+  const handleTouchEnd = async () => {
+    if (pullingDistance > 60) {
+      setIsRefreshing(true);
+      setPullingDistance(60); // Snap and hold
+      
+      // Simulate data fetch/update
+      await new Promise(res => setTimeout(res, 1500));
+      
+      setIsRefreshing(false);
+      setPullingDistance(0);
+    } else {
+      setPullingDistance(0);
+    }
+    setStartY(0);
+  };
 
   useEffect(() => {
     // Initialize Telegram Web App
@@ -73,16 +119,17 @@ export default function App() {
 
   useEffect(() => {
     const handleAdminOpen = () => setShowAdminLogin(true);
+    const handleAdminDirect = () => setCurrentTab('admin');
     window.addEventListener('open-admin-login', handleAdminOpen);
-    return () => window.removeEventListener('open-admin-login', handleAdminOpen);
+    window.addEventListener('open-admin-direct', handleAdminDirect);
+    return () => {
+      window.removeEventListener('open-admin-login', handleAdminOpen);
+      window.removeEventListener('open-admin-direct', handleAdminDirect);
+    };
   }, []);
 
   if (showSplash) {
     return <SplashScreen onFinish={() => setShowSplash(false)} />;
-  }
-
-  if (!captchaSolved && !isAdmin) {
-    return <MathCaptcha onSuccess={() => setCaptchaSolved(true)} />;
   }
 
   const getTabTitle = () => {
@@ -96,6 +143,7 @@ export default function App() {
 
   return (
     <div className="relative min-h-[100dvh] bg-app-bg text-white selection:bg-brand/30 overflow-hidden">
+      <GlobalToast />
       
       {/* Background Ambient Glows */}
       <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-brand rounded-full blur-[100px] opacity-20 pointer-events-none" />
@@ -119,14 +167,71 @@ export default function App() {
       </div>
 
       {/* Main Content Area */}
-      <main className="w-full relative z-10">
-        {currentTab === 'dashboard' && <DashboardView />}
-        {currentTab === 'wallet' && <WalletView />}
-        {(currentTab === 'earn' || currentTab === 'friends') && (
-          <div className="pt-28 text-center text-white/30 font-display text-sm tracking-widest px-4">
-            MODULE NOT YET ACTIVE
+      <main 
+        className="w-full relative z-10"
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        <motion.div
+           animate={{ y: pullingDistance }}
+           transition={{ type: 'spring', stiffness: 300, damping: 30 }}
+           className="min-h-[100dvh]"
+        >
+          {/* Refresh indicator */}
+          <div 
+             className="absolute left-0 right-0 flex justify-center items-center pointer-events-none z-50"
+             style={{ top: -60, height: 60 }}
+          >
+             <motion.div
+                animate={{ 
+                   rotate: isRefreshing ? 360 : pullingDistance * 4,
+                   opacity: pullingDistance > 10 ? 1 : 0,
+                   scale: Math.min(pullingDistance / 40, 1)
+                }}
+                transition={isRefreshing ? { rotate: { repeat: Infinity, duration: 1, ease: 'linear' } } : { type: 'spring', stiffness: 400, damping: 30 }}
+                className="w-10 h-10 rounded-full bg-black/60 border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] flex items-center justify-center backdrop-blur-md"
+             >
+                <RefreshCw className="w-5 h-5 text-brand-light drop-shadow-[0_0_8px_theme(colors.brand.light)]" strokeWidth={2} />
+             </motion.div>
           </div>
-        )}
+
+          {currentTab === 'dashboard' && <DashboardView />}
+          {currentTab === 'wallet' && <WalletView />}
+          {currentTab === 'earn' && (
+            <div className="pt-24 px-4 pb-32 flex flex-col gap-4">
+               <div className="p-6 rounded-[2rem] bg-black/40 backdrop-blur-2xl border border-white/[0.05] relative overflow-hidden flex flex-col gap-4">
+                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand/20 blur-[50px] pointer-events-none" />
+                 <h2 className="text-[11px] font-semibold tracking-[0.2em] text-white/40 uppercase flex items-center gap-2">
+                   <Calendar className="w-3.5 h-3.5" /> Event Matrix
+                 </h2>
+                 {JSON.parse(localStorage.getItem('fake_db_events') || '[]').length === 0 ? (
+                   <div className="text-center text-white/30 py-10 text-[12px] tracking-wide uppercase">No active operations</div>
+                 ) : (
+                   JSON.parse(localStorage.getItem('fake_db_events') || '[]').map((ev: any) => (
+                     <motion.div initial={{opacity:0, y:10}} animate={{opacity:1,y:0}} key={ev.id} className="p-4 rounded-[1.5rem] flex flex-col sm:flex-row gap-4 justify-between sm:items-center bg-black/40 border border-white/[0.04]">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-2xl bg-white/[0.05] flex items-center justify-center border border-white/[0.02]">
+                            <Calendar className="w-4 h-4 text-brand-light drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" strokeWidth={1.5} />
+                          </div>
+                          <div>
+                             <div className="font-semibold text-[14px] text-white/90">{ev.title}</div>
+                             <div className="text-[10px] text-white/40 font-mono tracking-widest mt-0.5">ID: {ev.id || 'N/A'}</div>
+                          </div>
+                        </div>
+                        <button className="w-full sm:w-auto bg-white/[0.05] hover:bg-white/[0.1] px-5 py-3 rounded-xl text-brand-light text-[12px] tracking-wide font-semibold shadow-inner shadow-black/50 border border-white/5 transition-all">
+                           Claim {ev.reward} XP
+                        </button>
+                     </motion.div>
+                   ))
+                 )}
+               </div>
+            </div>
+          )}
+          {currentTab === 'friends' && (
+            <FriendsView />
+          )}
+        </motion.div>
       </main>
 
       <Navigation currentTab={currentTab} onChange={setCurrentTab} />
@@ -176,36 +281,11 @@ export default function App() {
         )}
       </AnimatePresence>
 
-      {currentTab === 'admin' && isAdmin && (
-        <AdminDashboard />
+      {currentTab === 'admin' && (
+        <div className="absolute inset-0 z-50 overflow-hidden">
+          <AdminPanel onExit={() => setCurrentTab('dashboard')} />
+        </div>
       )}
-    </div>
-  );
-}
-
-function AdminDashboard() {
-  const { dbHelpers } = require('./store/useAppStore');
-  const users = dbHelpers.getAllUsers();
-  
-  return (
-    <div className="absolute inset-0 bg-[#050505] z-50 overflow-y-auto px-4 pt-20 pb-28">
-       <h1 className="text-lg font-medium tracking-wide mb-5 flex items-center gap-2 text-brand-light">
-         <ShieldAlert className="w-5 h-5" strokeWidth={1.5} /> Control Panel
-       </h1>
-       <div className="glass-card p-5 flex flex-col gap-4 border-none ring-1 ring-white/5">
-         <div className="text-white/40 text-xs uppercase tracking-wider mb-2">Network Size: <span className="text-white/90 font-medium">{users.length} Nodes</span></div>
-         <div className="flex flex-col gap-2">
-           {users.map((u: any) => (
-             <div key={u.id} className="flex justify-between items-center p-3 rounded-2xl bg-white/[0.02] border border-white/[0.02] hover:bg-white/[0.04]">
-                <div>
-                  <div className="font-medium text-sm tracking-wide text-white/90">{u.firstName} {u.lastName}</div>
-                  <div className="text-[10px] text-white/30 font-mono mt-0.5">ID: {u.id} | N° {u.joinNumber}</div>
-                </div>
-                <div className="text-emerald-400 font-medium text-sm tracking-wider">${u.balance.toFixed(2)}</div>
-             </div>
-           ))}
-         </div>
-       </div>
     </div>
   );
 }

@@ -1,4 +1,13 @@
 import { create } from 'zustand';
+import { db } from '../lib/firebase';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot, writeBatch } from 'firebase/firestore';
+
+export interface SystemConfig {
+  baseMineRate: number;
+  referralL1: number;
+  referralL2: number;
+  referralL3: number;
+}
 
 export interface User {
   id: string; // Telegram ID
@@ -7,17 +16,24 @@ export interface User {
   lastName?: string;
   photoUrl?: string;
   balance: number;
+  xpBalance?: number;
+  usdcBalance?: number;
+  miningStartedAt?: number | null;
   joinNumber: number;
   joinedAt: number;
   referralsCount: number;
   referredBy?: string;
+  isBanned?: boolean;
+  dailyStreak?: number;
+  lastLoginAt?: number;
 }
 
 export interface Transaction {
   id: string;
   userId: string;
-  type: 'deposit' | 'withdraw' | 'earn' | 'referral';
+  type: 'deposit' | 'withdraw' | 'earn' | 'referral' | 'mine' | 'referral_commission' | 'daily_login';
   amount: number;
+  currency?: 'USD' | 'USDC' | 'XP';
   timestamp: number;
   status: 'pending' | 'completed' | 'failed';
 }
@@ -27,75 +43,154 @@ interface AppState {
   currentUser: User | null;
   isAdmin: boolean;
   language: string;
+  toast: { message: string, type: 'success' | 'error' | 'info' } | null;
   setLanguage: (lang: string) => void;
+  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  hideToast: () => void;
   initSession: (tgUser: any, startParam?: string) => void;
   adminLogin: (pin: string) => boolean;
-  updateBalance: (amount: number, type: Transaction['type']) => void;
+  updateBalance: (amount: number, type: Transaction['type'], currency?: 'USD'|'USDC'|'XP') => void;
+  startMining: () => void;
+  claimMining: () => void;
+  claimDailyLogin: () => Promise<void>;
+  systemConfig: SystemConfig;
+  updateSystemConfig: (config: SystemConfig) => Promise<void>;
 }
 
-// Temporary LocalStorage Wrapper for robust state across reloads before Firebase
-const getStorage = (key: string, defaultValue: any) => {
-  const item = localStorage.getItem(key);
-  return item ? JSON.parse(item) : defaultValue;
+const DEFAULT_CONFIG: SystemConfig = {
+  baseMineRate: 50,
+  referralL1: 10,
+  referralL2: 5,
+  referralL3: 2
 };
-const setStorage = (key: string, value: any) => {
-  localStorage.setItem(key, JSON.stringify(value));
-};
+
+// Temporary global variable to hold snapshot unsubscriber to avoid multiple listeners
+let userListenerUnsub: any = null;
+let configListenerUnsub: any = null;
 
 export const useAppStore = create<AppState>((set, get) => ({
   isInitialized: false,
   currentUser: null,
   isAdmin: false,
   language: 'en',
+  toast: null,
+  systemConfig: DEFAULT_CONFIG,
   setLanguage: (lang) => set({ language: lang }),
   
-  initSession: (tgUser, startParam) => {
-    // Simulate robust DB initialization
+  showToast: (message, type = 'info') => {
+    set({ toast: { message, type } });
+    setTimeout(() => {
+      set((state) => (state.toast?.message === message ? { toast: null } : state));
+    }, 3000);
+  },
+  
+  hideToast: () => set({ toast: null }),
+  
+  initSession: async (tgUser, startParam) => {
     if (!tgUser || !tgUser.id) return;
     
-    // In actual production, this connects to Firebase.
-    const allUsers: Record<string, User> = getStorage('fake_db_users', {});
-    
-    let user = allUsers[tgUser.id];
-    
-    if (!user) {
-      // New user registration
-      user = {
-        id: tgUser.id.toString(),
-        username: tgUser.username,
-        firstName: tgUser.first_name,
-        lastName: tgUser.last_name,
-        photoUrl: tgUser.photo_url,
-        balance: 0,
-        joinNumber: Object.keys(allUsers).length + 1,
-        joinedAt: Date.now(),
-        referralsCount: 0,
-        referredBy: startParam // Referral system mock
-      };
-      
-      // Credit referrer if exists
-      if (startParam && allUsers[startParam]) {
-        allUsers[startParam].referralsCount += 1;
-        // give bonus to referrer
-        allUsers[startParam].balance += 10;
+    try {
+      const uid = tgUser.id.toString();
+
+      const userRef = doc(db, 'users', uid);
+      const userSnap = await getDoc(userRef);
+      if (!userSnap.exists()) {
+        const newUser: User = {
+          id: uid,
+          username: tgUser.username || "",
+          firstName: tgUser.first_name || "",
+          lastName: tgUser.last_name || "",
+          photoUrl: tgUser.photo_url || "",
+          balance: 0,
+          xpBalance: 0,
+          usdcBalance: 0,
+          miningStartedAt: null,
+          joinNumber: Date.now() + Math.floor(Math.random() * 1000), // Random placeholder instead of getDocs
+          joinedAt: Date.now(),
+          referralsCount: 0,
+          referredBy: startParam || ""
+        };
         
-        const txs: Transaction[] = getStorage('fake_db_txs', []);
-        txs.push({
-          id: Math.random().toString(36).slice(2, 9),
-          userId: startParam,
-          type: 'referral',
-          amount: 10,
-          timestamp: Date.now(),
-          status: 'completed'
-        });
-        setStorage('fake_db_txs', txs);
+        await setDoc(userRef, newUser);
+        
+        if (startParam && startParam !== uid) {
+          try {
+             const batch = writeBatch(db);
+             const ref1Doc = doc(db, 'users', startParam);
+             const ref1Snap = await getDoc(ref1Doc);
+             if (ref1Snap.exists()) {
+               const ref1Data = ref1Snap.data() as User;
+               batch.update(ref1Doc, {
+                 referralsCount: (ref1Data.referralsCount || 0) + 1,
+                 xpBalance: (ref1Data.xpBalance || 0) + 10
+               });
+               
+               const tx1Ref = doc(collection(db, 'transactions'));
+               batch.set(tx1Ref, {
+                 userId: startParam, type: 'referral', amount: 10, currency: 'XP', timestamp: Date.now(), status: 'completed'
+               });
+
+               if (ref1Data.referredBy && ref1Data.referredBy !== uid) {
+                 const ref2Doc = doc(db, 'users', ref1Data.referredBy);
+                 const ref2Snap = await getDoc(ref2Doc);
+                 if (ref2Snap.exists()) {
+                   const ref2Data = ref2Snap.data() as User;
+                   batch.update(ref2Doc, { xpBalance: (ref2Data.xpBalance || 0) + 5 });
+                   
+                   const tx2Ref = doc(collection(db, 'transactions'));
+                   batch.set(tx2Ref, {
+                     userId: ref1Data.referredBy, type: 'referral', amount: 5, currency: 'XP', timestamp: Date.now(), status: 'completed'
+                   });
+                   
+                   if (ref2Data.referredBy && ref2Data.referredBy !== uid && ref2Data.referredBy !== startParam) {
+                     const ref3Doc = doc(db, 'users', ref2Data.referredBy);
+                     const ref3Snap = await getDoc(ref3Doc);
+                     if (ref3Snap.exists()) {
+                       const ref3Data = ref3Snap.data() as User;
+                       batch.update(ref3Doc, { xpBalance: (ref3Data.xpBalance || 0) + 2 });
+                       
+                       const tx3Ref = doc(collection(db, 'transactions'));
+                       batch.set(tx3Ref, {
+                         userId: ref2Data.referredBy, type: 'referral', amount: 2, currency: 'XP', timestamp: Date.now(), status: 'completed'
+                       });
+                     }
+                   }
+                 }
+               }
+             }
+             await batch.commit();
+          } catch (refErr) {
+             console.error("Referral process skipped due to error:", refErr);
+          }
+        }
       }
+
+      if (configListenerUnsub) configListenerUnsub();
+      configListenerUnsub = onSnapshot(doc(db, 'system', 'config'), (snapshot) => {
+         if (snapshot.exists()) {
+            set({ systemConfig: snapshot.data() as SystemConfig });
+         } else {
+            // Document doesn't exist, create it with default
+            setDoc(doc(db, 'system', 'config'), DEFAULT_CONFIG).catch(console.error);
+         }
+      });
+
+      if (userListenerUnsub) userListenerUnsub();
+      userListenerUnsub = onSnapshot(userRef, (snapshot) => {
+         if (snapshot.exists()) {
+            set({ currentUser: snapshot.data() as User, isInitialized: true });
+         } else {
+            set({ isInitialized: true }); // Prevent infinite spin if user drops abruptly
+         }
+      }, (error) => {
+         console.error("onSnapshot error:", error);
+         set({ isInitialized: true });
+      });
       
-      allUsers[user.id] = user;
-      setStorage('fake_db_users', allUsers);
+    } catch (e) {
+      console.error("Firebase init session error:", e);
+      set({ isInitialized: true });
     }
-    
-    set({ currentUser: user, isInitialized: true });
   },
   
   adminLogin: (pin) => {
@@ -106,37 +201,183 @@ export const useAppStore = create<AppState>((set, get) => ({
     return false;
   },
   
-  updateBalance: (amount, type) => {
+  updateBalance: async (amount, type, currency = 'USD') => {
     const { currentUser } = get();
     if (!currentUser) return;
     
-    const newBalance = currentUser.balance + amount;
-    const allUsers = getStorage('fake_db_users', {});
+    let updates: any = {};
+    if (currency === 'USD') updates.balance = (currentUser.balance || 0) + amount;
+    else if (currency === 'XP') updates.xpBalance = (currentUser.xpBalance || 0) + amount;
+    else if (currency === 'USDC') updates.usdcBalance = (currentUser.usdcBalance || 0) + amount;
+
+    try {
+      await updateDoc(doc(db, 'users', currentUser.id), updates);
+      await addDoc(collection(db, 'transactions'), {
+        userId: currentUser.id,
+        type,
+        amount,
+        currency,
+        timestamp: Date.now(),
+        status: type === 'deposit' || type === 'withdraw' ? 'pending' : 'completed'
+      });
+      get().showToast(`${type === 'deposit' ? 'Deposit' : type === 'withdraw' ? 'Withdrawal' : 'Transaction'} requested`, 'success');
+    } catch (e) { 
+      console.error(e); 
+      get().showToast('Transaction failed', 'error');
+    }
+  },
+
+  updateSystemConfig: async (config) => {
+    try {
+      await setDoc(doc(db, 'system', 'config'), config);
+    } catch (e) { console.error(e); }
+  },
+
+  startMining: async () => {
+    const { currentUser } = get();
+    if (!currentUser || currentUser.miningStartedAt) return;
+    try {
+      await updateDoc(doc(db, 'users', currentUser.id), { miningStartedAt: Date.now() });
+    } catch (e) { console.error(e); }
+  },
+
+  claimMining: async () => {
+    const { currentUser, systemConfig } = get();
+    if (!currentUser || !currentUser.miningStartedAt) return;
     
-    allUsers[currentUser.id] = { ...currentUser, balance: newBalance };
-    setStorage('fake_db_users', allUsers);
+    try {
+      const batch = writeBatch(db);
+      const userRef = doc(db, 'users', currentUser.id);
+      
+      batch.update(userRef, { miningStartedAt: null, xpBalance: (currentUser.xpBalance || 0) + systemConfig.baseMineRate });
+      
+      const txRef = doc(collection(db, 'transactions'));
+      batch.set(txRef, {
+        userId: currentUser.id, type: 'mine', amount: systemConfig.baseMineRate, currency: 'XP', timestamp: Date.now(), status: 'completed'
+      });
+
+      // Distribute Commission
+      if (currentUser.referredBy) {
+        const ref1Doc = doc(db, 'users', currentUser.referredBy);
+        const ref1Snap = await getDoc(ref1Doc);
+        if (ref1Snap.exists()) {
+          const l1Reward = (systemConfig.baseMineRate * systemConfig.referralL1) / 100;
+          const ref1Data = ref1Snap.data() as User;
+          batch.update(ref1Doc, { xpBalance: (ref1Data.xpBalance || 0) + l1Reward });
+          const tx1Ref = doc(collection(db, 'transactions'));
+          batch.set(tx1Ref, { userId: currentUser.referredBy, type: 'referral_commission', amount: l1Reward, currency: 'XP', timestamp: Date.now(), status: 'completed', originId: currentUser.id });
+          
+          if (ref1Data.referredBy) {
+            const ref2Doc = doc(db, 'users', ref1Data.referredBy);
+            const ref2Snap = await getDoc(ref2Doc);
+            if (ref2Snap.exists()) {
+               const l2Reward = (systemConfig.baseMineRate * systemConfig.referralL2) / 100;
+               const ref2Data = ref2Snap.data() as User;
+               batch.update(ref2Doc, { xpBalance: (ref2Data.xpBalance || 0) + l2Reward });
+               const tx2Ref = doc(collection(db, 'transactions'));
+               batch.set(tx2Ref, { userId: ref1Data.referredBy, type: 'referral_commission', amount: l2Reward, currency: 'XP', timestamp: Date.now(), status: 'completed', originId: currentUser.id });
+
+               if (ref2Data.referredBy) {
+                 const ref3Doc = doc(db, 'users', ref2Data.referredBy);
+                 const ref3Snap = await getDoc(ref3Doc);
+                 if (ref3Snap.exists()) {
+                   const l3Reward = (systemConfig.baseMineRate * systemConfig.referralL3) / 100;
+                   const ref3Data = ref3Snap.data() as User;
+                   batch.update(ref3Doc, { xpBalance: (ref3Data.xpBalance || 0) + l3Reward });
+                   const tx3Ref = doc(collection(db, 'transactions'));
+                   batch.set(tx3Ref, { userId: ref2Data.referredBy, type: 'referral_commission', amount: l3Reward, currency: 'XP', timestamp: Date.now(), status: 'completed', originId: currentUser.id });
+                 }
+               }
+            }
+          }
+        }
+      }
+
+      await batch.commit();
+      get().showToast('Mining rewards claimed successfully', 'success');
+
+    } catch (e) { 
+      console.error(e); 
+      get().showToast('Failed to claim rewards', 'error');
+    }
+  },
+  
+  claimDailyLogin: async () => {
+    const { currentUser } = get();
+    if (!currentUser) return;
     
-    const txs: Transaction[] = getStorage('fake_db_txs', []);
-    txs.unshift({
-      id: Math.random().toString(36).slice(2, 9),
-      userId: currentUser.id,
-      type,
-      amount,
-      timestamp: Date.now(),
-      status: 'pending' // Just for UI look
-    });
-    setStorage('fake_db_txs', txs);
+    const now = Date.now();
+    const lastLogin = currentUser.lastLoginAt || 0;
     
-    set({ currentUser: { ...currentUser, balance: newBalance } });
+    const today = new Date(now).setHours(0, 0, 0, 0);
+    const lastLoginDate = new Date(lastLogin).setHours(0, 0, 0, 0);
+    
+    if (today === lastLoginDate && lastLogin !== 0) {
+      return; // Already claimed today
+    }
+    
+    const isYesterday = today - lastLoginDate === 86400000;
+    let newStreak = 1;
+    if (isYesterday && currentUser.dailyStreak) {
+      newStreak = currentUser.dailyStreak + 1;
+    }
+    
+    const rewardAmount = Math.min(newStreak * 10, 100); // Up to 100 XP
+    
+    try {
+      const batch = writeBatch(db);
+      const userRef = doc(db, 'users', currentUser.id);
+      
+      batch.update(userRef, {
+        dailyStreak: newStreak,
+        lastLoginAt: now,
+        xpBalance: (currentUser.xpBalance || 0) + rewardAmount
+      });
+      
+      const txRef = doc(collection(db, 'transactions'));
+      batch.set(txRef, {
+        userId: currentUser.id,
+        type: 'daily_login',
+        amount: rewardAmount,
+        currency: 'XP',
+        timestamp: now,
+        status: 'completed'
+      });
+      
+      await batch.commit();
+      get().showToast(`Daily login claimed: +${rewardAmount} XP!`, 'success');
+    } catch (e) {
+      console.error(e);
+      get().showToast('Failed to claim daily reward', 'error');
+    }
   }
 }));
 
-// Exporting helpers to view 'DB' from admin
+// Provide basic fetching for admin tasks and transactions
 export const dbHelpers = {
-  getAllUsers: (): User[] => Object.values(getStorage('fake_db_users', {})),
-  getTransactions: (userId: string): Transaction[] => {
-    const all = getStorage('fake_db_txs', []) as Transaction[];
-    return all.filter(t => t.userId === userId);
+  getAllUsers: async (): Promise<User[]> => {
+    const snap = await getDocs(collection(db, 'users'));
+    return snap.docs.map(d => d.data() as User);
   },
-  getAllTransactions: (): Transaction[] => getStorage('fake_db_txs', [])
+  listenUsers: (callback: (users: User[]) => void) => {
+    const q = query(collection(db, 'users'));
+    return onSnapshot(q, (snap) => {
+      callback(snap.docs.map(d => d.data() as User).sort((a, b) => b.joinedAt - a.joinedAt));
+    });
+  },
+  updateUser: async (userId: string, data: Partial<User>) => {
+    await updateDoc(doc(db, 'users', userId), data);
+  },
+  getTransactions: (userId: string, callback: (txs: Transaction[]) => void) => {
+    const q = query(collection(db, 'transactions'), where('userId', '==', userId));
+    return onSnapshot(q, (snap) => {
+      const txs = snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+      callback(txs.sort((a,b) => b.timestamp - a.timestamp));
+    });
+  },
+  getAllTransactions: async (): Promise<Transaction[]> => {
+    const snap = await getDocs(collection(db, 'transactions'));
+    return snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+  }
 };
+

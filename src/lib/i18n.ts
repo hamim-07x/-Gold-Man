@@ -13,10 +13,12 @@ export const translations = {
     noTx: "No transactions yet",
     dashboard: "Dashboard",
     wallet: "Wallet",
-    earn: "Earn",
+    earn: "Events",
     settings: "Settings",
     pending: "Pending",
-    completed: "Completed"
+    completed: "Completed",
+    pay: "Pay",
+    claim: "Claim"
   },
   bn: {
     balance: "আপনার ব্যালেন্স",
@@ -32,10 +34,12 @@ export const translations = {
     noTx: "কোনো লেনদেন নেই",
     dashboard: "ড্যাশবোর্ড",
     wallet: "ওয়ালেট",
-    earn: "উপার্জন",
+    earn: "ইভেন্ট",
     settings: "সেটিংস",
     pending: "অপেক্ষমান",
-    completed: "সম্পন্ন"
+    completed: "সম্পন্ন",
+    pay: "পে",
+    claim: "ক্লাইম"
   },
   hi: {
     balance: "आपका बैलेंस",
@@ -51,10 +55,12 @@ export const translations = {
     noTx: "कोई लेन-देन नहीं",
     dashboard: "डैशबोर्ड",
     wallet: "बटुवा",
-    earn: "कमाएँ",
+    earn: "कार्यक्रम",
     settings: "सेटिंग्स",
     pending: "लंबित",
-    completed: "पूरा हुआ"
+    completed: "पूरा हुआ",
+    pay: "भुगतान",
+    claim: "दावा करें"
   },
   ar: {
     balance: "رصيدك",
@@ -70,10 +76,12 @@ export const translations = {
     noTx: "لا توجد معاملات حتى الآن",
     dashboard: "لوحة القيادة",
     wallet: "محفظة",
-    earn: "يكسب",
+    earn: "أحداث",
     settings: "إعدادات",
     pending: "قيد الانتظار",
-    completed: "مكتمل"
+    completed: "مكتمل",
+    pay: "يدفع",
+    claim: "يطالب"
   },
   es: {
     balance: "Tu Saldo",
@@ -89,10 +97,12 @@ export const translations = {
     noTx: "Aún no hay transacciones",
     dashboard: "Panel",
     wallet: "Billetera",
-    earn: "Ganar",
+    earn: "Eventos",
     settings: "Ajustes",
     pending: "Pendiente",
-    completed: "Completado"
+    completed: "Completado",
+    pay: "Pagar",
+    claim: "Reclamar"
   },
   ru: {
     balance: "Ваш баланс",
@@ -108,10 +118,12 @@ export const translations = {
     noTx: "Пока нет транзакций",
     dashboard: "Панель",
     wallet: "Кошелек",
-    earn: "Заработать",
+    earn: "События",
     settings: "Настройки",
     pending: "В ожидании",
-    completed: "Завершено"
+    completed: "Завершено",
+    pay: "Оплатить",
+    claim: "Получить"
   }
 };
 
