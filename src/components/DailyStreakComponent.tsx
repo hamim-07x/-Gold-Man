@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
 import { Flame, CheckCircle2, Gift } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
+import { playClickSound } from '../lib/audio';
 
 export function DailyStreakComponent() {
   const { currentUser, claimDailyLogin } = useAppStore();
@@ -26,6 +27,7 @@ export function DailyStreakComponent() {
 
   const handleClaim = async () => {
     if (!canClaim || isProcessing) return;
+    playClickSound();
     setIsProcessing(true);
     await claimDailyLogin();
     setIsProcessing(false);

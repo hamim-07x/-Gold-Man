@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot, writeBatch } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot, writeBatch, orderBy } from 'firebase/firestore';
 
 export interface SystemConfig {
   baseMineRate: number;
@@ -26,6 +26,7 @@ export interface User {
   isBanned?: boolean;
   dailyStreak?: number;
   lastLoginAt?: number;
+  level?: number;
 }
 
 export interface Transaction {
@@ -36,6 +37,15 @@ export interface Transaction {
   currency?: 'USD' | 'USDC' | 'XP';
   timestamp: number;
   status: 'pending' | 'completed' | 'failed';
+  originId?: string;
+}
+
+export interface NotificationMsg {
+  id: string;
+  title: string;
+  message: string;
+  timestamp: number;
+  type: 'info' | 'warning' | 'success';
 }
 
 interface AppState {
@@ -43,9 +53,10 @@ interface AppState {
   currentUser: User | null;
   isAdmin: boolean;
   language: string;
-  toast: { message: string, type: 'success' | 'error' | 'info' } | null;
+  toast: { message: string, type: 'success' | 'error' | 'info', title?: string } | null;
+  notifications: NotificationMsg[];
   setLanguage: (lang: string) => void;
-  showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
+  showToast: (message: string, type?: 'success' | 'error' | 'info', title?: string) => void;
   hideToast: () => void;
   initSession: (tgUser: any, startParam?: string) => void;
   adminLogin: (pin: string) => boolean;
@@ -53,6 +64,7 @@ interface AppState {
   startMining: () => void;
   claimMining: () => void;
   claimDailyLogin: () => Promise<void>;
+  transferTokens: (toUserId: string, amount: number) => Promise<boolean>;
   systemConfig: SystemConfig;
   updateSystemConfig: (config: SystemConfig) => Promise<void>;
 }
@@ -67,6 +79,7 @@ const DEFAULT_CONFIG: SystemConfig = {
 // Temporary global variable to hold snapshot unsubscriber to avoid multiple listeners
 let userListenerUnsub: any = null;
 let configListenerUnsub: any = null;
+let notificationListenerUnsub: any = null;
 
 export const useAppStore = create<AppState>((set, get) => ({
   isInitialized: false,
@@ -74,11 +87,17 @@ export const useAppStore = create<AppState>((set, get) => ({
   isAdmin: false,
   language: 'en',
   toast: null,
+  notifications: [],
   systemConfig: DEFAULT_CONFIG,
   setLanguage: (lang) => set({ language: lang }),
   
-  showToast: (message, type = 'info') => {
-    set({ toast: { message, type } });
+  showToast: (message, type = 'info', title) => {
+    set({ toast: { message, type, title } });
+    if (type === 'success' || type === 'info') {
+      import('../lib/audio').then(m => m.playSuccessSound());
+    } else {
+      import('../lib/audio').then(m => m.playErrorSound());
+    }
     setTimeout(() => {
       set((state) => (state.toast?.message === message ? { toast: null } : state));
     }, 3000);
@@ -173,6 +192,11 @@ export const useAppStore = create<AppState>((set, get) => ({
             // Document doesn't exist, create it with default
             setDoc(doc(db, 'system', 'config'), DEFAULT_CONFIG).catch(console.error);
          }
+      });
+
+      if (notificationListenerUnsub) notificationListenerUnsub();
+      notificationListenerUnsub = onSnapshot(query(collection(db, 'notifications'), orderBy('timestamp', 'desc')), (snapshot) => {
+         set({ notifications: snapshot.docs.map(d => ({ id: d.id, ...d.data() } as NotificationMsg)) });
       });
 
       if (userListenerUnsub) userListenerUnsub();
@@ -350,6 +374,60 @@ export const useAppStore = create<AppState>((set, get) => ({
       console.error(e);
       get().showToast('Failed to claim daily reward', 'error');
     }
+  },
+
+  transferTokens: async (toUserId: string, amount: number) => {
+    const { currentUser } = get();
+    if (!currentUser || amount <= 0 || (currentUser.xpBalance || 0) < amount) {
+      get().showToast('Invalid transfer amount or insufficient balance', 'error');
+      return false;
+    }
+    
+    try {
+      const batch = writeBatch(db);
+      const senderRef = doc(db, 'users', currentUser.id);
+      const receiverRef = doc(db, 'users', toUserId);
+      
+      const receiverSnap = await getDoc(receiverRef);
+      if (!receiverSnap.exists()) {
+        get().showToast('Recipient not found', 'error');
+        return false;
+      }
+      const receiverData = receiverSnap.data() as User;
+
+      batch.update(senderRef, { xpBalance: (currentUser.xpBalance || 0) - amount });
+      batch.update(receiverRef, { xpBalance: (receiverData.xpBalance || 0) + amount });
+      
+      const txSendRef = doc(collection(db, 'transactions'));
+      batch.set(txSendRef, {
+        userId: currentUser.id,
+        type: 'withdraw',
+        amount: -amount,
+        currency: 'XP',
+        timestamp: Date.now(),
+        status: 'completed',
+        originId: toUserId
+      });
+
+      const txRecvRef = doc(collection(db, 'transactions'));
+      batch.set(txRecvRef, {
+        userId: toUserId,
+        type: 'deposit',
+        amount: amount,
+        currency: 'XP',
+        timestamp: Date.now(),
+        status: 'completed',
+        originId: currentUser.id
+      });
+      
+      await batch.commit();
+      get().showToast(`Successfully transferred ${amount} FIFA to ${receiverData.username || receiverData.firstName || toUserId}`, 'success');
+      return true;
+    } catch (e) {
+      console.error(e);
+      get().showToast('Transfer failed', 'error');
+      return false;
+    }
   }
 }));
 
@@ -367,6 +445,14 @@ export const dbHelpers = {
   },
   updateUser: async (userId: string, data: Partial<User>) => {
     await updateDoc(doc(db, 'users', userId), data);
+  },
+  findUserByUsername: async (username: string): Promise<User | null> => {
+    const q = query(collection(db, 'users'), where('username', '==', username.replace('@', '')));
+    const snap = await getDocs(q);
+    if (!snap.empty) {
+      return snap.docs[0].data() as User;
+    }
+    return null;
   },
   getTransactions: (userId: string, callback: (txs: Transaction[]) => void) => {
     const q = query(collection(db, 'transactions'), where('userId', '==', userId));

@@ -1,7 +1,8 @@
 import React from 'react';
-import { LayoutTemplate, WalletCards, Flame, UsersRound, Settings } from 'lucide-react';
+import { LayoutTemplate, WalletCards, Flame, UsersRound, Store } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion } from 'motion/react';
+import { playClickSound } from '../lib/audio';
 
 interface NavigationProps {
   currentTab: string;
@@ -27,7 +28,10 @@ export function Navigation({ currentTab, onChange }: NavigationProps) {
           return (
             <button
               key={tab.id}
-              onClick={() => onChange(tab.id)}
+              onClick={() => {
+                playClickSound();
+                onChange(tab.id);
+              }}
               className={cn(
                 "relative p-1.5 rounded-full transition-all duration-300 flex flex-col items-center justify-center w-12 h-12 active:scale-95 group",
                 isActive ? `bg-white/[0.08] shadow-inner shadow-black/50 ${tab.color}` : "text-white/40 hover:bg-white/[0.02]"
@@ -45,19 +49,20 @@ export function Navigation({ currentTab, onChange }: NavigationProps) {
         })}
       </div>
 
-      {/* Floating Action Button */}
+      {/* Floating Action Button for Marketplace */}
       <button 
         onClick={() => {
-           window.dispatchEvent(new CustomEvent('open-admin-direct'));
+           playClickSound();
+           onChange('marketplace');
         }}
         className={cn(
           "w-[60px] h-[60px] rounded-3xl flex items-center justify-center transition-all active:scale-95 pointer-events-auto backdrop-blur-3xl border border-white/[0.08] shadow-[0_10px_40px_rgba(0,0,0,0.5)] flex-shrink-0 group",
-          currentTab === 'admin' 
-            ? "bg-brand/40 text-white shadow-[0_0_20px_rgba(139,92,246,0.5)]" 
+          currentTab === 'marketplace' 
+            ? "bg-brand/40 text-white shadow-[0_0_20px_rgba(139,92,246,0.5)] bg-gradient-to-tr from-brand to-glow-pink" 
             : "bg-black/40 text-white/50 hover:bg-white/10"
         )}
       >
-        <Settings className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" strokeWidth={1.5} />
+        <Store className="w-6 h-6 group-hover:scale-110 group-hover:text-white transition-all duration-300 drop-shadow-[0_0_8px_rgba(255,255,255,0.2)]" strokeWidth={1.5} />
       </button>
 
     </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, Menu, Bell, Plus, Calendar, Users, RefreshCw } from 'lucide-react';
+import { ShieldAlert, Menu, Bell, Plus, Calendar, Users, RefreshCw, Store, X, Info } from 'lucide-react';
 import { useAppStore, dbHelpers } from './store/useAppStore';
 import { cn } from './lib/utils';
 import { t } from './lib/i18n';
@@ -44,11 +44,12 @@ function SplashScreen({ onFinish }: { onFinish: () => void }) {
 }
 
 export default function App() {
-  const { isInitialized, initSession, language, adminLogin } = useAppStore();
+  const { isInitialized, initSession, language, adminLogin, notifications } = useAppStore();
   const [showSplash, setShowSplash] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [showAdminLogin, setShowAdminLogin] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   // Pull-to-refresh state
   const [startY, setStartY] = useState(0);
@@ -136,6 +137,7 @@ export default function App() {
     if (currentTab === 'dashboard') return t(language, 'dashboard');
     if (currentTab === 'wallet') return t(language, 'wallet');
     if (currentTab === 'earn') return t(language, 'earn');
+    if (currentTab === 'marketplace') return 'MARKETPLACE';
     if (currentTab === 'friends') return 'FRIENDS';
     if (currentTab === 'profile') return 'PROFILE';
     return currentTab;
@@ -160,9 +162,9 @@ export default function App() {
         <span className="font-display font-medium text-[15px] tracking-widest text-white/90 uppercase">
           {getTabTitle()}
         </span>
-        <button className="p-1.5 text-white/50 hover:text-white relative transition-colors">
+        <button onClick={() => setShowNotifications(true)} className="p-1.5 text-white/50 hover:text-white relative transition-colors">
           <Bell className="w-5 h-5" strokeWidth={1.5} />
-          <span className="absolute top-1.5 right-2 w-1.5 h-1.5 bg-brand-light rounded-full shadow-[0_0_5px_theme(colors.brand.light)]" />
+          {notifications.length > 0 && <span className="absolute top-1.5 right-2 w-1.5 h-1.5 bg-brand-light rounded-full shadow-[0_0_5px_theme(colors.brand.light)]" />}
         </button>
       </div>
 
@@ -228,6 +230,13 @@ export default function App() {
                </div>
             </div>
           )}
+          {currentTab === 'marketplace' && (
+            <div className="pt-24 px-4 pb-32 flex flex-col items-center justify-center min-h-[80vh] gap-4">
+                <Store className="w-16 h-16 text-white/10 mb-4" />
+                <h2 className="text-xl font-bold tracking-widest uppercase text-white/90">Marketplace</h2>
+                <p className="text-[12px] text-white/40 tracking-wider text-center uppercase">Module Syncing... Please check back later.</p>
+            </div>
+          )}
           {currentTab === 'friends' && (
             <FriendsView />
           )}
@@ -237,6 +246,49 @@ export default function App() {
       <Navigation currentTab={currentTab} onChange={setCurrentTab} />
 
       <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+
+      {/* Notifications Slide-over */}
+      <AnimatePresence>
+         {showNotifications && (
+            <motion.div 
+               initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+               className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+               onClick={() => setShowNotifications(false)}
+            >
+               <motion.div 
+                  initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
+                  transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                  onClick={e => e.stopPropagation()}
+                  className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-[#050505] border-l border-white/10 flex flex-col shadow-2xl overflow-hidden"
+               >
+                  <div className="p-4 border-b border-white/5 flex items-center justify-between">
+                     <h2 className="text-[14px] font-bold tracking-[0.2em] uppercase text-white/90">Notifications</h2>
+                     <button onClick={() => setShowNotifications(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
+                        <X className="w-4 h-4 text-white/60" />
+                     </button>
+                  </div>
+                  <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
+                     {notifications.length === 0 ? (
+                        <div className="text-center text-white/30 text-[12px] uppercase mt-10 tracking-widest">No notifications</div>
+                     ) : (
+                        notifications.map(n => (
+                           <div key={n.id} className="p-4 rounded-[1.25rem] bg-white/[0.02] border border-white/5 flex gap-3">
+                              <div className="pt-0.5">
+                                 {n.type === 'success' ? <Bell className="w-4 h-4 text-emerald-400" /> : <Info className="w-4 h-4 text-brand-light" />}
+                              </div>
+                              <div className="flex-1">
+                                 <div className="text-[13px] font-bold text-white/90 mb-1">{n.title}</div>
+                                 <div className="text-[12px] text-white/60 leading-relaxed">{n.message}</div>
+                                 <div className="text-[10px] text-white/30 uppercase mt-2">{new Date(n.timestamp).toLocaleTimeString()}</div>
+                              </div>
+                           </div>
+                        ))
+                     )}
+                  </div>
+               </motion.div>
+            </motion.div>
+         )}
+      </AnimatePresence>
 
       {/* Admin Login Modal */}
       <AnimatePresence>

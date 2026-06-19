@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore, dbHelpers, User } from '../store/useAppStore';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, ShieldAlert, ShieldCheck, Users, Calendar, Settings as SettingsIcon, LogOut, ChevronRight, Activity } from 'lucide-react';
+import { Search, ShieldAlert, ShieldCheck, Users, Calendar, Settings as SettingsIcon, LogOut, Activity, MessageSquare, Send } from 'lucide-react';
 import { cn } from '../lib/utils';
+import { collection, addDoc } from 'firebase/firestore';
+import { db } from '../lib/firebase';
 
-type AdminTab = 'users' | 'events' | 'settings';
+type AdminTab = 'users' | 'events' | 'communications' | 'settings';
 
 export function AdminPanel({ onExit }: { onExit?: () => void }) {
-  const { systemConfig, updateSystemConfig } = useAppStore();
+  const { systemConfig, updateSystemConfig, showToast } = useAppStore();
   const [users, setUsers] = useState<User[]>([]);
   const [search, setSearch] = useState('');
   const [activeTab, setActiveTab] = useState<AdminTab>('users');
   
   const [configForm, setConfigForm] = useState(systemConfig);
+
+  const [notifTitle, setNotifTitle] = useState('');
+  const [notifMessage, setNotifMessage] = useState('');
+  const [notifType, setNotifType] = useState<'info' | 'warning' | 'success'>('info');
 
   useEffect(() => {
     setConfigForm(systemConfig);
@@ -20,6 +26,23 @@ export function AdminPanel({ onExit }: { onExit?: () => void }) {
 
   const handleSaveConfig = () => {
     updateSystemConfig(configForm);
+  };
+
+  const handleSendNotification = async () => {
+    if(!notifTitle.trim() || !notifMessage.trim()) return;
+    try {
+        await addDoc(collection(db, 'notifications'), {
+            title: notifTitle,
+            message: notifMessage,
+            type: notifType,
+            timestamp: Date.now()
+        });
+        showToast('Notification Dispatched', 'success');
+        setNotifTitle('');
+        setNotifMessage('');
+    } catch (e) {
+        showToast('Failed to send notification', 'error');
+    }
   };
 
   useEffect(() => {
@@ -38,6 +61,7 @@ export function AdminPanel({ onExit }: { onExit?: () => void }) {
   const tabs: {id: AdminTab, icon: React.ElementType, label: string}[] = [
     { id: 'users', icon: Users, label: 'Nodes' },
     { id: 'events', icon: Calendar, label: 'Events' },
+    { id: 'communications', icon: MessageSquare, label: 'Comms' },
     { id: 'settings', icon: SettingsIcon, label: 'Config' },
   ];
 
@@ -181,12 +205,58 @@ export function AdminPanel({ onExit }: { onExit?: () => void }) {
               </div>
             </motion.div>
           )}
+          
+          {activeTab === 'communications' && (
+            <motion.div key="communications" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="flex flex-col gap-4 mt-2">
+              <div className="p-5 rounded-[2rem] bg-black/40 border border-white/5 backdrop-blur-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-brand-light/10 blur-2xl rounded-full pointer-events-none" />
+                <h4 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/50 mb-5 flex items-center gap-2">
+                  <MessageSquare className="w-3.5 h-3.5 text-brand-light" /> Broadcast Comms
+                </h4>
+                
+                <div className="flex flex-col gap-4 relative z-10 w-full">
+                  <div>
+                      <label className="text-[11px] text-white/50 uppercase tracking-widest block mb-2 font-bold px-1">Network Title</label>
+                      <input 
+                          type="text" 
+                          value={notifTitle} 
+                          onChange={e => setNotifTitle(e.target.value)} 
+                          placeholder="Transmission Title..."
+                          className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 text-[13px] text-white focus:outline-none focus:border-brand-light/40 transition-colors"
+                      />
+                  </div>
+                  <div>
+                      <label className="text-[11px] text-white/50 uppercase tracking-widest block mb-2 font-bold px-1">Transmission Data</label>
+                      <textarea 
+                          value={notifMessage} 
+                          onChange={e => setNotifMessage(e.target.value)} 
+                          placeholder="Your message to the network..."
+                          className="w-full h-32 resize-none bg-white/5 border border-white/10 rounded-2xl p-4 text-[13px] text-white focus:outline-none focus:border-brand-light/40 transition-colors"
+                      />
+                  </div>
+                  
+                  <div className="flex gap-2">
+                      <button onClick={()=>setNotifType('info')} className={cn("flex-1 py-3 text-[11px] uppercase tracking-wider font-bold rounded-xl transition-all border", notifType === 'info' ? "bg-brand/20 text-brand-light border-brand/30" : "bg-white/5 text-white/40 border-transparent")}>Info</button>
+                      <button onClick={()=>setNotifType('success')} className={cn("flex-1 py-3 text-[11px] uppercase tracking-wider font-bold rounded-xl transition-all border", notifType === 'success' ? "bg-emerald-500/20 text-emerald-400 border-emerald-500/30" : "bg-white/5 text-white/40 border-transparent")}>Success</button>
+                      <button onClick={()=>setNotifType('warning')} className={cn("flex-1 py-3 text-[11px] uppercase tracking-wider font-bold rounded-xl transition-all border", notifType === 'warning' ? "bg-amber-500/20 text-amber-400 border-amber-500/30" : "bg-white/5 text-white/40 border-transparent")}>Warning</button>
+                  </div>
+
+                  <button 
+                    onClick={handleSendNotification} 
+                    className="w-full bg-gradient-to-r from-brand to-glow-pink text-white font-bold tracking-[0.2em] text-[12px] uppercase py-4 rounded-2xl mt-2 active:scale-[0.98] transition-transform shadow-[0_5px_20px_rgba(139,92,246,0.3)] flex items-center justify-center gap-2"
+                  >
+                    <Send className="w-4 h-4" /> Dispatch to Network
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {activeTab === 'settings' && (
             <motion.div key="settings" initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} exit={{opacity:0, y:-10}} className="flex flex-col gap-4 mt-2">
-              <div className="p-5 rounded-3xl bg-black/40 border border-white border-opacity-5 backdrop-blur-xl relative overflow-hidden">
+              <div className="p-5 rounded-[2rem] bg-black/40 border border-white border-opacity-5 backdrop-blur-xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-20 h-20 bg-amber-500/10 blur-2xl rounded-full pointer-events-none" />
-                <h4 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/30 mb-5 flex items-center gap-2">
+                <h4 className="text-[10px] uppercase tracking-[0.2em] font-semibold text-white/50 mb-5 flex items-center gap-2">
                   <Activity className="w-3.5 h-3.5" /> Rewards Configuration
                 </h4>
                 
@@ -209,7 +279,7 @@ export function AdminPanel({ onExit }: { onExit?: () => void }) {
                     <input type="number" value={configForm.referralL3} onChange={e => setConfigForm({...configForm, referralL3: Number(e.target.value)})} className="w-20 bg-white/5 border border-white/10 text-center rounded-xl p-2 text-[13px] text-brand-light font-mono focus:outline-none focus:border-white/30 transition-colors" />
                   </div>
                   
-                  <button onClick={handleSaveConfig} className="w-full bg-white/10 text-white text-[13px] font-semibold tracking-wide py-3.5 rounded-2xl mt-4 hover:bg-brand/80 transition-colors shadow-lg active:scale-95">
+                  <button onClick={handleSaveConfig} className="w-full bg-white/10 text-white text-[13px] font-semibold tracking-wide py-3.5 rounded-2xl mt-4 hover:bg-brand/80 transition-colors shadow-lg active:scale-95 border border-white/10">
                     Deploy Changes
                   </button>
                 </div>
