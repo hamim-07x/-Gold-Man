@@ -38,7 +38,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={onClose}
-              className="fixed inset-0 bg-black/60 backdrop-blur-md z-50 transition-all"
+              className="fixed inset-0 bg-black/20 backdrop-blur-sm z-50 transition-all"
             />
 
             {/* Sidebar Content */}
@@ -47,41 +47,41 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: '-100%' }}
               transition={{ type: 'spring', damping: 28, stiffness: 220 }}
-              className="fixed top-0 left-0 bottom-0 w-[82%] max-w-[300px] bg-black/50 backdrop-blur-3xl @supports(backdrop-filter:blur(50px)){backdrop-saturate-200} border-r border-white/[0.05] shadow-[20px_0_40px_rgba(0,0,0,0.8)] z-50 flex flex-col pt-2"
+              className="fixed top-0 left-0 bottom-0 w-[82%] max-w-[300px] bg-white backdrop-blur-3xl @supports(backdrop-filter:blur(50px)){backdrop-saturate-200} border-r border-black/5 shadow-2xl z-50 flex flex-col pt-2"
             >
-              <div className="absolute top-[-5%] left-[-10%] w-[200px] h-[200px] bg-brand/20 blur-[80px] rounded-full pointer-events-none" />
+              <div className="absolute top-[-5%] left-[-10%] w-[200px] h-[200px] bg-brand/5 blur-[80px] rounded-full pointer-events-none" />
               
               {/* Header */}
               <div className="p-5 flex items-center justify-between z-10">
-                <span className="font-display font-bold text-lg tracking-[0.2em] text-white/90 drop-shadow-[0_0_8px_rgba(255,255,255,0.4)] flex items-center gap-2">
-                   <Hexagon className="w-5 h-5 text-accent-light" /> GSCL
+                <span className="font-display font-medium text-lg tracking-[0.2em] text-gray-900 flex items-center gap-2">
+                   <Hexagon className="w-5 h-5 text-brand" /> GSCL
                 </span>
-                <button onClick={onClose} className="p-1.5 text-white/40 hover:text-white rounded-full bg-white/5 border border-white/5 active:scale-95 transition-all">
+                <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-900 rounded-full bg-gray-50 border border-black/5 active:scale-95 transition-all">
                   <X className="w-4 h-4" strokeWidth={1.5} />
                 </button>
               </div>
 
               {/* Profile Overview */}
               <div className="px-5 py-2 z-10">
-                <div className="flex items-center gap-3.5 mb-5">
-                  <div className="relative w-12 h-12 rounded-full p-[2px] shadow-lg shadow-brand/30">
-                    <div className="absolute inset-0 bg-gradient-to-tr from-brand via-glow-pink to-accent-light rounded-full animate-pulse" />
-                    <div className="relative w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden border border-white/10">
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="relative w-12 h-12 rounded-full p-[2px] shadow-sm shadow-brand/10 bg-white">
+                    <div className="absolute inset-0 bg-gradient-to-tr from-brand to-brand/50 rounded-full" />
+                    <div className="relative w-full h-full rounded-full bg-white flex items-center justify-center overflow-hidden border border-white">
                       {currentUser?.photoUrl ? (
                         <img src={currentUser.photoUrl} alt="avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-lg font-bold tracking-tight text-white drop-shadow-[0_0_8px_rgba(255,255,255,0.6)]">{currentUser?.firstName?.[0] || 'U'}</span>
+                        <span className="text-lg font-bold tracking-tight text-brand">{currentUser?.firstName?.[0] || 'U'}</span>
                       )}
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-medium text-[15px] tracking-wide flex items-center gap-1.5 text-white/95">
+                    <h3 className="font-medium text-[15px] tracking-wide flex items-center gap-1.5 text-gray-900">
                       {currentUser?.username?.toUpperCase() || currentUser?.firstName?.toUpperCase() || 'USER'}
-                      <span className="w-3.5 h-3.5 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[8px] font-bold shadow-[0_0_8px_rgba(16,185,129,0.5)]">✓</span>
+                      <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center text-[8px] font-bold">✓</span>
                     </h3>
                     <p 
                       onClick={handleIdClick}
-                      className="text-white/30 text-[10px] font-mono cursor-pointer tracking-wider uppercase mt-0.5 hover:text-white/50 transition-colors"
+                      className="text-gray-400 text-[10px] font-mono cursor-pointer tracking-wider uppercase mt-0.5 hover:text-gray-600 transition-colors"
                     >
                       ID: {currentUser?.id || '00000000'}
                     </p>
@@ -89,39 +89,39 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
 
                 {/* Level Card */}
-                <div className="p-4 flex flex-col gap-1.5 relative overflow-hidden rounded-2xl bg-white/[0.03] border border-white/5 shadow-inner shadow-white/5">
-                  <div className="absolute top-0 right-0 w-20 h-20 bg-brand/20 blur-[40px] rounded-full pointer-events-none" />
-                  <span className="text-white/40 text-[10px] tracking-[0.2em] uppercase font-semibold">
+                <div className="p-4 flex flex-col gap-1.5 relative overflow-hidden rounded-[1.25rem] bg-gray-50 border border-black/5 shadow-sm">
+                  <div className="absolute top-0 right-0 w-20 h-20 bg-brand/10 blur-[30px] rounded-full pointer-events-none" />
+                  <span className="text-gray-500 text-[10px] tracking-[0.2em] uppercase font-bold">
                     Current Level
                   </span>
-                  <div className="text-[20px] font-mono font-medium tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-brand-light to-glow-pink">
-                    Lvl 1 <span className="text-white/40 text-[12px] font-sans tracking-widest ml-1 uppercase">Novice</span>
+                  <div className="text-[20px] font-mono font-medium tracking-tight text-gray-900 drop-shadow-sm">
+                    Lvl 1 <span className="text-gray-400 text-[12px] font-sans tracking-widest ml-1 uppercase font-bold">Novice</span>
                   </div>
                 </div>
               </div>
 
-              <div className="h-[1px] bg-white/[0.05] mx-5 my-4" />
+              <div className="h-[1px] bg-black/5 mx-5 my-4" />
 
               {/* Menu Items */}
               <div className="flex-1 px-3 py-2 flex flex-col gap-1 overflow-y-auto custom-scrollbar z-10">
-                <MenuButton icon={Languages} label={t(language, 'language')} onClick={() => setShowLang(true)} color="text-accent-light" />
-                <MenuButton icon={Info} label={t(language, 'company')} color="text-brand-light" />
-                <MenuButton icon={Shield} label={t(language, 'legal')} color="text-glow-pink" />
-                <MenuButton icon={BookOpen} label={t(language, 'tutorials')} color="text-amber-400" />
+                <MenuButton icon={Languages} label={t(language, 'language')} onClick={() => setShowLang(true)} color="text-brand" />
+                <MenuButton icon={Info} label={t(language, 'company')} color="text-emerald-500" />
+                <MenuButton icon={Shield} label={t(language, 'legal')} color="text-amber-500" />
+                <MenuButton icon={BookOpen} label={t(language, 'tutorials')} color="text-indigo-500" />
               </div>
 
               {/* Footer */}
               <div className="p-5 pb-8 flex flex-col gap-3 z-10">
-                <button className="w-full bg-brand/10 hover:bg-brand/20 border border-brand/20 flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl text-brand-light group transition-all active:scale-[0.98] shadow-[0_0_15px_rgba(139,92,246,0.1)]">
+                <button className="w-full bg-brand/10 hover:bg-brand/20 border border-brand/20 flex items-center justify-center gap-3 py-3.5 px-4 rounded-[1rem] text-brand group transition-all active:scale-[0.98] shadow-sm">
                   <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-                  <span className="font-semibold text-[13px] tracking-wide uppercase">{t(language, 'support')}</span>
+                  <span className="font-bold text-[11px] tracking-widest uppercase">Support</span>
                 </button>
                 <button 
                   onClick={() => { window.dispatchEvent(new CustomEvent('open-admin-direct')); onClose(); }}
-                  className="w-full bg-white/[0.03] hover:bg-white/[0.08] border border-white/5 flex items-center justify-center gap-3 py-3.5 px-4 rounded-xl text-white/50 group transition-all active:scale-[0.98]"
+                  className="w-full bg-gray-50 hover:bg-gray-100 border border-black/5 flex items-center justify-center gap-3 py-3.5 px-4 rounded-[1rem] text-gray-500 group transition-all active:scale-[0.98] shadow-sm"
                 >
                   <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" strokeWidth={1.5} />
-                  <span className="font-semibold text-[13px] tracking-wide uppercase">Admin Panel</span>
+                  <span className="font-bold text-[11px] tracking-widest uppercase">Admin Panel</span>
                 </button>
               </div>
 
@@ -139,12 +139,12 @@ function MenuButton({ icon: Icon, label, onClick, color }: { icon: any, label: s
   return (
     <button 
       onClick={onClick}
-      className="flex items-center gap-3.5 px-4 py-3.5 w-full text-left text-white/60 hover:text-white hover:bg-white/5 rounded-[1.2rem] transition-all active:scale-[0.98] group"
+      className="flex items-center gap-3.5 px-4 py-3.5 w-full text-left text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-[1rem] transition-all active:scale-[0.98] group"
     >
-      <div className={cn("w-8 h-8 rounded-full bg-white/5 border border-white/5 flex items-center justify-center group-hover:bg-white/10 transition-colors shadow-inner", color)}>
+      <div className={cn("w-8 h-8 rounded-full bg-gray-50 border border-black/5 flex items-center justify-center group-hover:bg-white transition-colors shadow-sm", color)}>
         <Icon className="w-4 h-4" strokeWidth={1.5} />
       </div>
-      <span className="font-medium text-[13px] tracking-wide leading-tight group-hover:translate-x-1 transition-transform">{label}</span>
+      <span className="font-bold text-[11px] tracking-widest uppercase leading-tight group-hover:translate-x-1 transition-transform">{label}</span>
     </button>
   );
 }

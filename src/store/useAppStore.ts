@@ -2,11 +2,32 @@ import { create } from 'zustand';
 import { db } from '../lib/firebase';
 import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot, writeBatch, orderBy } from 'firebase/firestore';
 
+export interface AppTask {
+  id: string;
+  type: 'telegram' | 'twitter' | 'youtube' | 'website' | 'other';
+  title: string;
+  reward: number; // XP mostly
+  link: string;
+}
+
+export interface AppEvent {
+  id: string;
+  thumbnail: string; // URL
+  title: string;
+  poolAmount: string; // '1000' -> "1,000 USDT Pool"
+  endTime: number; // timestamp
+  tasks: AppTask[];
+  payload: number; // base reward in USDC/USDT
+}
+
 export interface SystemConfig {
   baseMineRate: number;
   referralL1: number;
   referralL2: number;
   referralL3: number;
+  botUsername?: string;
+  tasks?: AppTask[];
+  events?: AppEvent[];
 }
 
 export interface User {
@@ -27,6 +48,7 @@ export interface User {
   dailyStreak?: number;
   lastLoginAt?: number;
   level?: number;
+  tasksCompleted?: number;
 }
 
 export interface Transaction {
@@ -70,10 +92,13 @@ interface AppState {
 }
 
 const DEFAULT_CONFIG: SystemConfig = {
-  baseMineRate: 50,
+  baseMineRate: 0.60,
   referralL1: 10,
   referralL2: 5,
-  referralL3: 2
+  referralL3: 2,
+  botUsername: 'MyAwesomeBot',
+  tasks: [],
+  events: []
 };
 
 // Temporary global variable to hold snapshot unsubscriber to avoid multiple listeners
@@ -269,15 +294,24 @@ export const useAppStore = create<AppState>((set, get) => ({
     const { currentUser, systemConfig } = get();
     if (!currentUser || !currentUser.miningStartedAt) return;
     
+    // VIP Level Calculation (Max 15)
+    // Every 1000 XP increases the VIP level by 1.
+    const LEVEL_THRESHOLD = 1000;
+    const vipLevel = Math.min(15, Math.floor((currentUser.xpBalance || 0) / LEVEL_THRESHOLD));
+    
+    // 5% increase in mining rate per VIP level
+    const bonusMultiplier = 1 + (vipLevel * 0.05); 
+    const finalMineReward = Number((systemConfig.baseMineRate * bonusMultiplier).toFixed(2));
+
     try {
       const batch = writeBatch(db);
       const userRef = doc(db, 'users', currentUser.id);
       
-      batch.update(userRef, { miningStartedAt: null, xpBalance: (currentUser.xpBalance || 0) + systemConfig.baseMineRate });
+      batch.update(userRef, { miningStartedAt: null, xpBalance: (currentUser.xpBalance || 0) + finalMineReward });
       
       const txRef = doc(collection(db, 'transactions'));
       batch.set(txRef, {
-        userId: currentUser.id, type: 'mine', amount: systemConfig.baseMineRate, currency: 'XP', timestamp: Date.now(), status: 'completed'
+        userId: currentUser.id, type: 'mine', amount: finalMineReward, currency: 'XP', timestamp: Date.now(), status: 'completed'
       });
 
       // Distribute Commission
@@ -285,7 +319,7 @@ export const useAppStore = create<AppState>((set, get) => ({
         const ref1Doc = doc(db, 'users', currentUser.referredBy);
         const ref1Snap = await getDoc(ref1Doc);
         if (ref1Snap.exists()) {
-          const l1Reward = (systemConfig.baseMineRate * systemConfig.referralL1) / 100;
+          const l1Reward = (finalMineReward * systemConfig.referralL1) / 100;
           const ref1Data = ref1Snap.data() as User;
           batch.update(ref1Doc, { xpBalance: (ref1Data.xpBalance || 0) + l1Reward });
           const tx1Ref = doc(collection(db, 'transactions'));
@@ -295,7 +329,7 @@ export const useAppStore = create<AppState>((set, get) => ({
             const ref2Doc = doc(db, 'users', ref1Data.referredBy);
             const ref2Snap = await getDoc(ref2Doc);
             if (ref2Snap.exists()) {
-               const l2Reward = (systemConfig.baseMineRate * systemConfig.referralL2) / 100;
+               const l2Reward = (finalMineReward * systemConfig.referralL2) / 100;
                const ref2Data = ref2Snap.data() as User;
                batch.update(ref2Doc, { xpBalance: (ref2Data.xpBalance || 0) + l2Reward });
                const tx2Ref = doc(collection(db, 'transactions'));

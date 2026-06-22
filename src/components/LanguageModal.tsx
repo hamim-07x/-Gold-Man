@@ -41,21 +41,21 @@ export function LanguageModal({ isOpen, onClose }: LanguageModalProps) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="fixed inset-0 bg-black/50 backdrop-blur-[10px] z-[60]"
+            className="fixed inset-0 bg-black/20 backdrop-blur-[10px] z-[60]"
           />
           <motion.div
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
-            className="fixed bottom-0 left-2 right-2 bg-gradient-to-b from-[#121218]/80 to-[#050505]/90 backdrop-blur-[50px] @supports(backdrop-filter:blur(50px)){backdrop-saturate-150} border-[0.5px] border-white/10 rounded-[28px] rounded-bl-[16px] rounded-br-[16px] p-4 z-[70] max-h-[85vh] overflow-hidden flex flex-col mb-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.1),0_-10px_40px_rgba(0,0,0,0.5)]"
+            className="fixed bottom-0 left-2 right-2 bg-white/90 backdrop-blur-[50px] @supports(backdrop-filter:blur(50px)){backdrop-saturate-150} border border-black/5 rounded-[28px] rounded-bl-[16px] rounded-br-[16px] p-4 z-[70] max-h-[85vh] overflow-hidden flex flex-col mb-2 shadow-xl"
           >
-            <div className="w-10 h-1 bg-white/20 rounded-full mx-auto mb-3" />
+            <div className="w-10 h-1 bg-gray-300 rounded-full mx-auto mb-3" />
             
             <div className="flex justify-between items-center mb-3 px-1">
-              <h2 className="text-[17px] font-medium tracking-wide">{t(language, 'language')}</h2>
-              <button onClick={onClose} className="p-1.5 bg-white/5 rounded-full hover:bg-white/10 transition border border-white/5">
-                <X className="w-4 h-4 text-white/70" strokeWidth={1.5} />
+              <h2 className="text-[17px] font-medium text-gray-900 tracking-wide">{t(language, 'language')}</h2>
+              <button onClick={onClose} className="p-1.5 bg-gray-100 rounded-full hover:bg-gray-200 transition border border-black/5">
+                <X className="w-4 h-4 text-gray-500" strokeWidth={1.5} />
               </button>
             </div>
 
@@ -69,11 +69,11 @@ export function LanguageModal({ isOpen, onClose }: LanguageModalProps) {
                       onClick={() => handleSelect(lang.id)}
                       className={`flex flex-col items-center justify-center p-2.5 rounded-2xl border transition-all active:scale-95 aspect-square ${
                         isActive 
-                          ? 'bg-brand/10 border-brand-light/40 text-white shadow-[0_0_15px_rgba(96,165,250,0.15)] ring-1 ring-brand-light/50' 
-                          : 'bg-white/5 border-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                          ? 'bg-brand/5 border-brand/20 text-brand shadow-sm' 
+                          : 'bg-gray-50 border-black/5 text-gray-500 hover:bg-gray-100 hover:text-gray-900'
                       }`}
                     >
-                      <span className="text-xl mb-1.5 drop-shadow-md leading-none">{lang.flag}</span>
+                      <span className="text-xl mb-1.5 drop-shadow-sm leading-none">{lang.flag}</span>
                       <span className="text-[10px] sm:text-[11px] font-medium text-center tracking-wide leading-tight">{lang.name}</span>
                     </button>
                   );

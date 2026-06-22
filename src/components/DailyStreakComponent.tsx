@@ -40,62 +40,64 @@ export function DailyStreakComponent() {
       initial={{opacity:0, y:10}} 
       animate={{opacity:1, y:0}} 
       transition={{delay: 0.15}}
-      className="p-5 rounded-[1.5rem] bg-black/40 backdrop-blur-xl border border-white/[0.04] relative overflow-hidden mt-1 flex flex-col gap-3"
+      className="p-4 rounded-3xl glass-card relative overflow-hidden mt-2 flex flex-col gap-3"
     >
-      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[50px] pointer-events-none" />
+      <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[40px] pointer-events-none" />
       
-      <div className="flex items-center justify-between z-10 px-1">
-        <h3 className="text-[10px] text-white/40 font-semibold uppercase tracking-[0.2em] flex items-center gap-1.5">
-          <Flame className="w-3.5 h-3.5 text-amber-500" />
-          Daily Auth Sequence
+      <div className="flex items-center justify-between z-10 px-2">
+        <h3 className="text-[10px] text-gray-500 font-bold uppercase tracking-[0.2em] flex items-center gap-1.5">
+          <Flame className="w-3.5 h-3.5 text-brand" />
+          Daily Sequence
         </h3>
-        <div className="flex items-center gap-1">
-          <span className="text-[10px] text-white/40 uppercase tracking-widest shrink-0">Current:</span>
-          <span className="text-[12px] text-amber-400 font-mono font-bold">{streak} Day{streak !== 1 ? 's' : ''}</span>
+        <div className="flex items-center gap-1.5">
+          <span className="text-[9px] text-gray-400 uppercase tracking-widest shrink-0 font-bold">Current:</span>
+          <span className="text-xs text-brand font-mono font-bold">{streak} Day{streak !== 1 ? 's' : ''}</span>
         </div>
       </div>
 
-      <div className="flex items-center justify-between bg-white/[0.02] border border-white/[0.05] p-3 rounded-2xl relative overflow-hidden group">
+      <div className="flex items-center justify-between bg-black/5 border border-black/5 p-2 rounded-2xl relative overflow-hidden group">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/5 to-amber-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
-            <Gift className="w-4 h-4 text-amber-400 drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
+        <div className="flex items-center gap-2.5 z-10 w-full pr-2">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
+            <Gift className="w-4 h-4 text-brand drop-shadow-sm" />
           </div>
-          <div className="flex flex-col">
-            <span className="text-[10px] uppercase text-white/40 tracking-[0.2em]">Next Reward</span>
-            <span className="text-[14px] font-mono text-white/90">+{nextReward} XP</span>
+          <div className="flex flex-col flex-1 min-w-0">
+            <span className="text-[9px] uppercase text-gray-500 tracking-[0.2em] font-bold mb-0.5 truncate">Next Reward</span>
+            <span className="text-[11px] font-mono text-gray-900 font-bold">+{nextReward} XP</span>
           </div>
         </div>
 
-        {canClaim ? (
-          <button 
-            onClick={handleClaim}
-            disabled={isProcessing}
-            className="px-4 py-2.5 bg-gradient-to-r from-amber-200 via-amber-400 to-amber-200 text-black text-[11px] font-bold tracking-[0.15em] rounded-xl shadow-[0_0_15px_rgba(251,191,36,0.4)] active:scale-95 transition-all w-[100px] flex justify-center uppercase shrink-0"
-          >
-            {isProcessing ? '...' : 'CLAIM'}
-          </button>
-        ) : (
-          <div className="px-4 py-2.5 bg-white/5 border border-white/5 text-emerald-400 flex items-center gap-1.5 text-[10px] font-bold tracking-[0.15em] rounded-xl uppercase shrink-0">
-            <CheckCircle2 className="w-3.5 h-3.5" /> Checked In
-          </div>
-        )}
+        <div className="z-10 cursor-pointer shrink-0 ml-auto">
+          {canClaim ? (
+            <button 
+              onClick={handleClaim}
+              disabled={isProcessing}
+              className="px-4 py-2 bg-[#1d1d1f] text-white hover:bg-black text-[10px] uppercase tracking-widest font-bold rounded-lg active:scale-95 transition-all w-[80px] flex justify-center shrink-0 shadow-sm"
+            >
+              {isProcessing ? '...' : 'CLAIM'}
+            </button>
+          ) : (
+            <div className="px-3 py-1.5 bg-accent/10 border border-accent/20 text-accent flex items-center gap-1 text-[9px] font-bold tracking-widest rounded-lg uppercase shrink-0">
+              <CheckCircle2 className="w-3.5 h-3.5" /> Checked In
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Mini Streak Nodes */}
-      <div className="flex justify-between items-center px-1 mt-1">
+      <div className="flex justify-between items-center px-1 mt-1 z-10">
         {[...Array(7)].map((_, i) => {
           const isCompleted = canClaim ? i < streak : i < streak;
           return (
             <div key={i} className="flex flex-col items-center gap-1.5">
-              <div className={`w-6 h-6 rounded-full flex items-center justify-center ${isCompleted ? 'bg-brand/20 border-brand/40 shadow-[0_0_8px_rgba(37,99,235,0.4)] border' : 'bg-white/5 border border-white/10'}`}>
+              <div className={`w-5 h-5 rounded-full flex items-center justify-center ${isCompleted ? 'bg-brand/10 border-brand/20 shadow-sm border' : 'bg-black/5 border border-black/5'}`}>
                 {isCompleted ? (
-                   <CheckCircle2 className="w-3.5 h-3.5 text-brand-light" strokeWidth={3} />
+                   <CheckCircle2 className="w-3 h-3 text-brand" strokeWidth={3} />
                 ) : (
-                   <div className="w-1 h-1 rounded-full bg-white/20" />
+                   <div className="w-1.5 h-1.5 rounded-full bg-gray-300" />
                 )}
               </div>
-              <span className={`text-[8px] tracking-widest font-mono ${isCompleted ? 'text-brand-light' : 'text-white/20'}`}>
+              <span className={`text-[9px] tracking-widest font-mono font-bold ${isCompleted ? 'text-brand' : 'text-gray-400'}`}>
                 D{i + 1}
               </span>
             </div>

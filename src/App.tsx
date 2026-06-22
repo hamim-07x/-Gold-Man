@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { ShieldAlert, Menu, Bell, Plus, Calendar, Users, RefreshCw, Store, X, Info } from 'lucide-react';
+import { ShieldAlert, Menu, Bell, Plus, Calendar, Users, RefreshCw, Store, X, Info, Dribbble, Trophy } from 'lucide-react';
 import { useAppStore, dbHelpers } from './store/useAppStore';
 import { cn } from './lib/utils';
 import { t } from './lib/i18n';
+import confetti from 'canvas-confetti';
+import { playClickSound, playSuccessSound } from './lib/audio';
 
 import { Navigation } from './components/Navigation';
 import { Sidebar } from './components/Sidebar';
@@ -21,23 +23,29 @@ function SplashScreen({ onFinish }: { onFinish: () => void }) {
   }, [onFinish]);
 
   return (
-    <div className="fixed inset-0 bg-app-bg z-[100] flex flex-col items-center justify-center">
+    <div className="fixed inset-0 bg-white z-[100] flex flex-col items-center justify-center">
       <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 1, ease: 'easeOut' }}
-        className="relative"
+        initial={{ opacity: 0, scale: 0.5, rotate: -180 }}
+        animate={{ opacity: 1, scale: 1, rotate: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="relative mb-6"
       >
-        <div className="absolute inset-0 blur-[80px] bg-brand/30 rounded-full" />
-        <div className="relative font-display font-medium text-4xl tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-br from-white to-white/70">
-          GSCL
-        </div>
+        <div className="absolute inset-0 blur-[30px] bg-brand/10 rounded-full" />
+        <Dribbble className="w-32 h-32 text-brand football-spin relative z-10 drop-shadow-sm" strokeWidth={1.5} />
+      </motion.div>
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, delay: 0.3 }}
+        className="font-display font-black text-3xl tracking-[0.4em] text-transparent bg-clip-text bg-gradient-to-br from-brand to-brand/70"
+      >
+        FIFA
       </motion.div>
       <motion.div
         initial={{ width: 0 }}
-        animate={{ width: 120 }}
+        animate={{ width: 150 }}
         transition={{ duration: 1.5, delay: 0.5, ease: 'easeInOut' }}
-        className="h-[1px] bg-brand-light mt-10 shadow-[0_0_8px_theme(colors.brand.light)]"
+        className="h-[2px] bg-brand mt-8 shadow-[0_0_10px_theme(colors.brand.DEFAULT)]"
       />
     </div>
   );
@@ -55,6 +63,28 @@ export default function App() {
   const [startY, setStartY] = useState(0);
   const [pullingDistance, setPullingDistance] = useState(0);
   const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const [earnEvents, setEarnEvents] = useState(() => {
+    const existing = localStorage.getItem('fake_db_events');
+    if (!existing || JSON.parse(existing).length === 0) {
+      const initial = [
+        { id: 'ev1', title: 'Daily Login Bonus', reward: 50 },
+        { id: 'ev2', title: 'Complete Profile', reward: 100 },
+        { id: 'ev3', title: 'Invite 1st Friend', reward: 500 }
+      ];
+      localStorage.setItem('fake_db_events', JSON.stringify(initial));
+      return initial;
+    }
+    return JSON.parse(existing);
+  });
+
+  useEffect(() => {
+    const handleStorage = () => {
+      setEarnEvents(JSON.parse(localStorage.getItem('fake_db_events') || '[]'));
+    };
+    window.addEventListener('storage', handleStorage);
+    return () => window.removeEventListener('storage', handleStorage);
+  }, []);
 
   const handleTouchStart = (e: React.TouchEvent) => {
     // Top of the document check
@@ -144,27 +174,32 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] bg-app-bg text-white selection:bg-brand/30 overflow-hidden">
+    <div className="relative min-h-[100dvh] bg-[#f5f5f7] text-gray-900 selection:bg-brand/20 overflow-hidden">
       <GlobalToast />
       
       {/* Background Ambient Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-brand rounded-full blur-[100px] opacity-20 pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] bg-indigo-900 rounded-full blur-[100px] opacity-20 pointer-events-none" />
+      <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-brand rounded-full blur-[80px] opacity-10 pointer-events-none" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] bg-brand-light rounded-full blur-[80px] opacity-10 pointer-events-none" />
 
       {/* Top Bar */}
-      <div className="fixed top-0 left-0 right-0 px-4 py-3 h-[60px] flex justify-between items-center z-40 bg-[#050505]/40 backdrop-blur-[40px] @supports(backdrop-filter:blur(40px)){backdrop-saturate-150} border-b border-white/[0.06] shadow-[0_4px_30px_rgba(0,0,0,0.1)]">
+      <div className="fixed top-0 left-0 right-0 px-4 pt-safe-top pb-3 h-[60px] flex justify-between items-end z-40 bg-white/70 backdrop-blur-2xl border-b border-black/5 shadow-sm">
         <button 
-          onClick={() => setSidebarOpen(true)}
-          className="p-1.5 text-white/70 hover:text-white transition-colors"
+          onClick={() => { playClickSound(); setSidebarOpen(true); }}
+          className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all bg-white hover:bg-gray-50 rounded-[0.8rem] border border-black/5 shadow-sm"
         >
-          <Menu className="w-5 h-5" strokeWidth={1.5} />
+          <Menu className="w-5 h-5" strokeWidth={2} />
         </button>
-        <span className="font-display font-medium text-[15px] tracking-widest text-white/90 uppercase">
-          {getTabTitle()}
-        </span>
-        <button onClick={() => setShowNotifications(true)} className="p-1.5 text-white/50 hover:text-white relative transition-colors">
-          <Bell className="w-5 h-5" strokeWidth={1.5} />
-          {notifications.length > 0 && <span className="absolute top-1.5 right-2 w-1.5 h-1.5 bg-brand-light rounded-full shadow-[0_0_5px_theme(colors.brand.light)]" />}
+        <div className="flex flex-col items-center justify-center mb-0.5">
+          <span className="text-[9px] text-brand font-mono font-bold tracking-[0.3em] uppercase">System Access</span>
+          <span className="font-black text-xs tracking-[0.2em] text-gray-900 uppercase mt-0.5">
+            {getTabTitle()}
+          </span>
+        </div>
+        <button onClick={() => { playClickSound(); setShowNotifications(true); }} className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all bg-white hover:bg-gray-50 rounded-[0.8rem] border border-black/5 shadow-sm relative">
+          <Bell className="w-4 h-4" strokeWidth={2} />
+          {notifications.length > 0 && (
+            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full border-[1.5px] border-white shadow-[0_0_8px_theme(colors.brand.DEFAULT)] animate-pulse" />
+          )}
         </button>
       </div>
 
@@ -192,54 +227,106 @@ export default function App() {
                    scale: Math.min(pullingDistance / 40, 1)
                 }}
                 transition={isRefreshing ? { rotate: { repeat: Infinity, duration: 1, ease: 'linear' } } : { type: 'spring', stiffness: 400, damping: 30 }}
-                className="w-10 h-10 rounded-full bg-black/60 border border-white/20 shadow-[0_4px_20px_rgba(0,0,0,0.5)] flex items-center justify-center backdrop-blur-md"
+                className="w-10 h-10 rounded-full bg-white border border-black/5 shadow-md flex items-center justify-center backdrop-blur-md"
              >
-                <RefreshCw className="w-5 h-5 text-brand-light drop-shadow-[0_0_8px_theme(colors.brand.light)]" strokeWidth={2} />
+                <RefreshCw className="w-5 h-5 text-brand" strokeWidth={2.5} />
              </motion.div>
           </div>
 
-          {currentTab === 'dashboard' && <DashboardView />}
-          {currentTab === 'wallet' && <WalletView />}
-          {currentTab === 'earn' && (
-            <div className="pt-24 px-4 pb-32 flex flex-col gap-4">
-               <div className="p-6 rounded-[2rem] bg-black/40 backdrop-blur-2xl border border-white/[0.05] relative overflow-hidden flex flex-col gap-4">
-                 <div className="absolute top-0 right-0 w-32 h-32 bg-brand/20 blur-[50px] pointer-events-none" />
-                 <h2 className="text-[11px] font-semibold tracking-[0.2em] text-white/40 uppercase flex items-center gap-2">
-                   <Calendar className="w-3.5 h-3.5" /> Event Matrix
-                 </h2>
-                 {JSON.parse(localStorage.getItem('fake_db_events') || '[]').length === 0 ? (
-                   <div className="text-center text-white/30 py-10 text-[12px] tracking-wide uppercase">No active operations</div>
-                 ) : (
-                   JSON.parse(localStorage.getItem('fake_db_events') || '[]').map((ev: any) => (
-                     <motion.div initial={{opacity:0, y:10}} animate={{opacity:1,y:0}} key={ev.id} className="p-4 rounded-[1.5rem] flex flex-col sm:flex-row gap-4 justify-between sm:items-center bg-black/40 border border-white/[0.04]">
-                        <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-2xl bg-white/[0.05] flex items-center justify-center border border-white/[0.02]">
-                            <Calendar className="w-4 h-4 text-brand-light drop-shadow-[0_0_8px_rgba(255,255,255,0.4)]" strokeWidth={1.5} />
-                          </div>
-                          <div>
-                             <div className="font-semibold text-[14px] text-white/90">{ev.title}</div>
-                             <div className="text-[10px] text-white/40 font-mono tracking-widest mt-0.5">ID: {ev.id || 'N/A'}</div>
-                          </div>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={currentTab}
+              initial={{ opacity: 0, y: 15, filter: 'blur(8px)' }}
+              animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
+              exit={{ opacity: 0, y: -15, filter: 'blur(8px)' }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              className="w-full flex-1"
+            >
+              {currentTab === 'dashboard' && <DashboardView />}
+              {currentTab === 'wallet' && <WalletView />}
+              {currentTab === 'earn' && (
+                <div className="pt-20 px-4 pb-28 flex flex-col gap-3">
+                   <div className="p-5 rounded-[2rem] bg-white border border-black/5 shadow-sm relative overflow-hidden flex flex-col gap-4">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-brand/10 blur-[50px] pointer-events-none" />
+                     <h2 className="text-[11px] font-black tracking-[0.2em] text-gray-500 uppercase flex items-center gap-1.5 z-10">
+                       <Calendar className="w-4 h-4 text-brand" /> Event Matrix
+                     </h2>
+                     <div className="flex flex-col gap-3 z-10">
+                         {earnEvents.length === 0 ? (
+                           <div className="text-center text-gray-400 py-8 text-[11px] tracking-wide uppercase font-bold bg-gray-50 rounded-2xl border border-black/5 border-dashed">No active operations</div>
+                         ) : (
+                           earnEvents.map((ev: any) => (
+                             <div key={ev.id} className="p-3.5 rounded-[1.25rem] flex items-center justify-between bg-gray-50 border border-black/5 shadow-inner">
+                                <div className="flex items-center gap-3.5 min-w-0 pr-2">
+                                  <div className="w-11 h-11 rounded-[1rem] bg-white flex items-center justify-center border border-black/5 shrink-0 shadow-sm">
+                                    <Calendar className="w-5 h-5 text-brand" strokeWidth={1.5} />
+                                  </div>
+                                  <div className="flex flex-col gap-0.5 min-w-0">
+                                     <div className="font-bold text-[13px] text-gray-900 tracking-wide truncate">{ev.title}</div>
+                                     <div className="text-[10px] text-gray-400 font-mono tracking-widest font-medium">ID: {ev.id || 'N/A'}</div>
+                                  </div>
+                                </div>
+                                <button 
+                                   onClick={() => {
+                                     playClickSound();
+                                     playSuccessSound();
+                                     confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+                                     const currentEvents = JSON.parse(localStorage.getItem('fake_db_events') || '[]');
+                                     const newEvents = currentEvents.filter((e: any) => e.id !== ev.id);
+                                     localStorage.setItem('fake_db_events', JSON.stringify(newEvents));
+                                     useAppStore.getState().updateBalance(ev.reward, 'earn', 'XP');
+                                     useAppStore.getState().showToast(`Claimed ${ev.reward} XP from ${ev.title}`, 'success');
+                                     window.dispatchEvent(new Event('storage'));
+                                   }}
+                                   className="shrink-0 bg-white hover:bg-gray-100 active:scale-95 px-4 py-2.5 text-[11px] rounded-[1rem] text-brand tracking-widest font-black shadow-sm border border-black/5 transition-all text-center">
+                                   Claim {ev.reward}XP
+                                </button>
+                             </div>
+                           ))
+                         )}
+                     </div>
+                   </div>
+                </div>
+              )}
+              {currentTab === 'marketplace' && (
+                <div className="pt-20 px-4 pb-28 flex flex-col items-center justify-center min-h-[70vh] gap-5">
+                    <div className="w-24 h-24 rounded-full bg-white flex items-center justify-center border border-black/5 relative shadow-md">
+                        <div className="absolute inset-0 bg-brand/5 rounded-full blur-[20px] animate-pulse" />
+                        <Store className="w-10 h-10 text-brand relative z-10" />
+                    </div>
+                    
+                    <div className="text-center flex flex-col gap-1.5">
+                        <h2 className="text-2xl font-black tracking-[0.3em] uppercase text-gray-900">Marketplace</h2>
+                        <p className="text-[11px] text-brand tracking-[0.2em] uppercase font-bold">Opening Soon</p>
+                    </div>
+
+                    <div className="flex bg-white p-4 rounded-3xl border border-black/5 shadow-sm gap-4 mt-2">
+                        <div className="flex flex-col items-center gap-1">
+                            <span className="text-2xl font-black text-gray-900 font-mono tracking-tighter w-12 text-center">30</span>
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Days</span>
                         </div>
-                        <button className="w-full sm:w-auto bg-white/[0.05] hover:bg-white/[0.1] px-5 py-3 rounded-xl text-brand-light text-[12px] tracking-wide font-semibold shadow-inner shadow-black/50 border border-white/5 transition-all">
-                           Claim {ev.reward} XP
-                        </button>
-                     </motion.div>
-                   ))
-                 )}
-               </div>
-            </div>
-          )}
-          {currentTab === 'marketplace' && (
-            <div className="pt-24 px-4 pb-32 flex flex-col items-center justify-center min-h-[80vh] gap-4">
-                <Store className="w-16 h-16 text-white/10 mb-4" />
-                <h2 className="text-xl font-bold tracking-widest uppercase text-white/90">Marketplace</h2>
-                <p className="text-[12px] text-white/40 tracking-wider text-center uppercase">Module Syncing... Please check back later.</p>
-            </div>
-          )}
-          {currentTab === 'friends' && (
-            <FriendsView />
-          )}
+                        <span className="text-2xl font-black text-gray-300 mt-1">:</span>
+                        <div className="flex flex-col items-center gap-1">
+                            <span className="text-2xl font-black text-gray-900 font-mono tracking-tighter w-12 text-center animate-pulse">23</span>
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Hours</span>
+                        </div>
+                        <span className="text-2xl font-black text-gray-300 mt-1">:</span>
+                        <div className="flex flex-col items-center gap-1">
+                            <span className="text-2xl font-black text-gray-900 font-mono tracking-tighter w-12 text-center animate-pulse">59</span>
+                            <span className="text-[10px] uppercase tracking-widest text-gray-400 font-bold">Mins</span>
+                        </div>
+                    </div>
+                    
+                    <p className="text-[11px] text-gray-500 tracking-widest text-center uppercase max-w-[220px] mt-4 font-bold leading-relaxed">
+                       Trade unique modules, synthetic assets, and NFTs globally.
+                    </p>
+                </div>
+              )}
+              {currentTab === 'friends' && (
+                <FriendsView />
+              )}
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
       </main>
 
@@ -252,34 +339,34 @@ export default function App() {
          {showNotifications && (
             <motion.div 
                initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-               className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+               className="fixed inset-0 z-50 bg-black/20 backdrop-blur-sm"
                onClick={() => setShowNotifications(false)}
             >
                <motion.div 
                   initial={{ x: '100%' }} animate={{ x: 0 }} exit={{ x: '100%' }}
                   transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                   onClick={e => e.stopPropagation()}
-                  className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-[#050505] border-l border-white/10 flex flex-col shadow-2xl overflow-hidden"
+                  className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white border-l border-black/5 flex flex-col shadow-2xl overflow-hidden"
                >
-                  <div className="p-4 border-b border-white/5 flex items-center justify-between">
-                     <h2 className="text-[14px] font-bold tracking-[0.2em] uppercase text-white/90">Notifications</h2>
-                     <button onClick={() => setShowNotifications(false)} className="p-2 bg-white/5 rounded-full hover:bg-white/10">
-                        <X className="w-4 h-4 text-white/60" />
+                  <div className="p-5 border-b border-black/5 flex items-center justify-between">
+                     <h2 className="text-[13px] font-black tracking-[0.2em] uppercase text-gray-900">Notifications</h2>
+                     <button onClick={() => setShowNotifications(false)} className="p-2 bg-gray-50 rounded-full hover:bg-gray-100 transition-colors border border-black/5">
+                        <X className="w-4 h-4 text-gray-500" />
                      </button>
                   </div>
                   <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
                      {notifications.length === 0 ? (
-                        <div className="text-center text-white/30 text-[12px] uppercase mt-10 tracking-widest">No notifications</div>
+                        <div className="text-center text-gray-400 text-[11px] font-bold uppercase mt-10 tracking-widest bg-gray-50 p-4 rounded-2xl border border-black/5 border-dashed">No notifications</div>
                      ) : (
                         notifications.map(n => (
-                           <div key={n.id} className="p-4 rounded-[1.25rem] bg-white/[0.02] border border-white/5 flex gap-3">
+                           <div key={n.id} className="p-4 rounded-2xl bg-white border border-black/5 shadow-sm flex gap-3">
                               <div className="pt-0.5">
-                                 {n.type === 'success' ? <Bell className="w-4 h-4 text-emerald-400" /> : <Info className="w-4 h-4 text-brand-light" />}
+                                 {n.type === 'success' ? <Bell className="w-5 h-5 text-emerald-500" /> : <Info className="w-5 h-5 text-brand" />}
                               </div>
                               <div className="flex-1">
-                                 <div className="text-[13px] font-bold text-white/90 mb-1">{n.title}</div>
-                                 <div className="text-[12px] text-white/60 leading-relaxed">{n.message}</div>
-                                 <div className="text-[10px] text-white/30 uppercase mt-2">{new Date(n.timestamp).toLocaleTimeString()}</div>
+                                 <div className="text-[13px] font-black text-gray-900 mb-1 tracking-wide">{n.title}</div>
+                                 <div className="text-xs text-gray-600 leading-relaxed font-medium">{n.message}</div>
+                                 <div className="text-[10px] font-bold text-gray-400 uppercase mt-2 tracking-widest">{new Date(n.timestamp).toLocaleTimeString()}</div>
                               </div>
                            </div>
                         ))
@@ -293,27 +380,27 @@ export default function App() {
       {/* Admin Login Modal */}
       <AnimatePresence>
         {showAdminLogin && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-[20px] p-4">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/20 backdrop-blur-[10px] p-4">
             <motion.div 
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="glass-card w-full max-w-[320px] p-6 flex flex-col gap-4 border border-white/10 ring-1 ring-white/5 shadow-2xl"
+              className="bg-white rounded-3xl w-full max-w-[320px] p-6 flex flex-col gap-5 border border-black/5 shadow-2xl"
             >
               <div className="flex justify-between items-center mb-1">
-                <div className="flex items-center gap-2 text-red-400">
-                  <ShieldAlert className="w-4 h-4" strokeWidth={1.5} />
-                  <h3 className="font-medium text-sm tracking-wide">Admin Access</h3>
+                <div className="flex items-center gap-2 text-rose-500">
+                  <ShieldAlert className="w-5 h-5" strokeWidth={1.5} />
+                  <h3 className="font-black text-sm tracking-wide uppercase">Admin Access</h3>
                 </div>
-                <button onClick={() => setShowAdminLogin(false)} className="text-white/40 hover:text-white">
-                   <span className="text-xl leading-none">×</span>
+                <button onClick={() => setShowAdminLogin(false)} className="text-gray-400 hover:text-gray-900 transition-colors bg-gray-50 rounded-full p-1 border border-black/5">
+                   <X className="w-4 h-4" />
                 </button>
               </div>
               <input 
                 type="password"
                 placeholder="PIN"
                 autoFocus
-                className="w-full bg-[#050505]/50 border border-white/5 rounded-[16px] px-4 py-3.5 text-center tracking-[0.5em] text-xl outline-none focus:border-brand-light/50 focus:bg-white/5 transition-all text-white placeholder:text-white/20"
+                className="w-full bg-gray-50 border border-black/5 rounded-2xl px-4 py-4 text-center tracking-[0.5em] text-2xl outline-none focus:border-brand/30 focus:ring-2 focus:ring-brand/10 transition-all text-gray-900 placeholder:text-gray-300 font-bold shadow-inner"
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') {
                     const ok = adminLogin(e.currentTarget.value);
@@ -322,12 +409,12 @@ export default function App() {
                       setCurrentTab('admin');
                     } else {
                       e.currentTarget.value = '';
-                      e.currentTarget.classList.add('border-red-500/50');
+                      e.currentTarget.classList.add('border-rose-500/50');
                     }
                   }
                 }}
               />
-              <p className="text-[10px] text-white/30 text-center uppercase tracking-widest mt-1">Four digit code</p>
+              <p className="text-[10px] font-bold text-gray-400 text-center uppercase tracking-widest">Four digit code</p>
             </motion.div>
           </div>
         )}

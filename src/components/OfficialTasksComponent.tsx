@@ -55,7 +55,7 @@ export function OfficialTasksComponent() {
           particleCount: 120,
           spread: 80,
           origin: { y: 0.6 },
-          colors: ['#8b5cf6', '#ec4899', '#fbbf24', '#34d399']
+          colors: ['#0071e3', '#34c759', '#ffcc00', '#5ac8fa']
         });
     }, 1200);
   };
@@ -70,14 +70,14 @@ export function OfficialTasksComponent() {
       className="mt-2 flex flex-col gap-3"
     >
       <div className="flex items-center justify-between px-1">
-        <h3 className="font-semibold text-[11px] uppercase tracking-[0.2em] text-white/40 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+        <h3 className="font-semibold text-[11px] uppercase tracking-[0.2em] text-gray-400 flex items-center gap-2">
+          <CheckCircle2 className="w-4 h-4 text-emerald-500" />
           Mission Log
         </h3>
       </div>
 
       {/* Tabs */}
-      <div className="flex bg-black/40 backdrop-blur-xl rounded-[1rem] p-1 border border-white/[0.05] shadow-inner shadow-black/50 overflow-x-auto no-scrollbar">
+      <div className="flex bg-white rounded-full p-1 border border-black/5 shadow-sm overflow-x-auto no-scrollbar">
         {[
           { id: 'social', label: 'Social', icon: Share2 },
           { id: 'referral', label: 'Referrals', icon: Users },
@@ -87,8 +87,8 @@ export function OfficialTasksComponent() {
             key={tab.id}
             onClick={() => { playClickSound(); setActiveTab(tab.id as any); }}
             className={cn(
-              "flex-1 py-2 px-3 text-[10px] uppercase tracking-[0.1em] font-bold rounded-[0.75rem] transition-all duration-300 flex items-center justify-center gap-1.5 min-w-fit",
-              activeTab === tab.id ? "bg-white/10 text-white shadow-[0_0_15px_rgba(255,255,255,0.05)] border border-white/10" : "text-white/30 hover:text-white/60"
+              "flex-1 py-2 px-3 text-[10px] uppercase tracking-[0.1em] font-bold rounded-full transition-all duration-300 flex items-center justify-center gap-1.5 min-w-fit",
+              activeTab === tab.id ? "bg-gray-100 text-gray-900 shadow-sm border border-black/5" : "text-gray-500 hover:text-gray-700"
             )}
           >
             <tab.icon className="w-3.5 h-3.5" />
@@ -117,13 +117,13 @@ export function OfficialTasksComponent() {
                    layout: { type: 'spring', stiffness: 200, damping: 20 }
                 }}
                 className={cn(
-                  "rounded-[1.25rem] bg-black/40 backdrop-blur-xl border border-white/[0.04] overflow-hidden group hover:bg-white/[0.03] transition-colors relative mx-auto",
-                  task.completed ? "w-14 h-14 p-0 flex items-center justify-center bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_20px_rgba(52,211,153,0.2)] mb-2" : "w-full p-4 flex items-center justify-between mb-2"
+                  "rounded-[1.25rem] bg-white border border-black/5 overflow-hidden group hover:bg-gray-50 transition-colors relative mx-auto shadow-sm",
+                  task.completed ? "w-14 h-14 p-0 flex items-center justify-center bg-emerald-50 border-emerald-100 mb-2" : "w-full p-3 flex items-center justify-between mb-2"
                 )}
               >
                 {!meetsCondition && !task.completed && (
-                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[1px] z-10 flex items-center justify-center">
-                    <span className="text-[10px] font-bold text-white/50 uppercase tracking-widest bg-black/60 px-3 py-1 rounded-full border border-white/10">Locked</span>
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[1px] z-10 flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-gray-500 uppercase tracking-widest bg-white px-3 py-1 rounded-full border border-black/5 shadow-sm">Locked</span>
                   </div>
                 )}
 
@@ -133,20 +133,20 @@ export function OfficialTasksComponent() {
                     animate={{ scale: 1 }}
                     transition={{ delay: 0.2, type: 'spring' }}
                   >
-                     <Check className="w-6 h-6 text-emerald-400" strokeWidth={3} />
+                     <Check className="w-6 h-6 text-emerald-500" strokeWidth={3} />
                   </motion.div>
                 ) : (
                   <>
                      <div className="flex items-center gap-3">
                        <div className={cn(
-                         "w-10 h-10 rounded-full flex items-center justify-center shrink-0 border",
-                         "bg-white/5 border-white/10 text-white/50"
+                         "w-10 h-10 rounded-[0.8rem] flex items-center justify-center shrink-0 border shadow-sm",
+                         "bg-gray-50 border-black/5 text-gray-500"
                        )}>
-                         <task.icon className="w-4 h-4" />
+                         <task.icon className="w-4 h-4 ml-0.5" />
                        </div>
                        <div className="flex flex-col gap-0.5">
-                           <span className="text-[11px] text-white/90 font-bold tracking-wide">{task.title}</span>
-                           <span className="text-[10px] text-brand-light font-mono font-bold flex items-center gap-1 drop-shadow-[0_0_5px_rgba(167,139,250,0.5)]">+{task.reward} XP</span>
+                           <span className="text-[12px] text-gray-800 font-bold tracking-wide">{task.title}</span>
+                           <span className="text-[10px] text-brand font-mono font-bold flex items-center gap-1 drop-shadow-sm">+{task.reward} XP</span>
                        </div>
                      </div>
                      
@@ -154,16 +154,16 @@ export function OfficialTasksComponent() {
                        onClick={() => handleCompleteTask(activeTab, task.id, task.reward, meetsCondition)}
                        disabled={!meetsCondition || isCompleting}
                        className={cn(
-                           "w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all group/btn",
-                           isCompleting ? "bg-brand/20 border border-brand/40 text-brand-light shadow-[0_0_15px_rgba(139,92,246,0.5)]" : "bg-white/[0.05] border border-white/10 hover:bg-brand-light/20 hover:text-brand-light hover:border-brand-light/30 active:scale-95"
+                           "w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all group/btn shadow-sm",
+                           isCompleting ? "bg-brand/10 border border-brand/20 text-brand" : "bg-gray-50 border border-black/5 hover:bg-gray-200 hover:text-gray-900 active:scale-95"
                        )}
                      >
                        {isCompleting ? (
                            <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }}>
-                               <RefreshCw className="w-4 h-4 text-brand-light" />
+                               <RefreshCw className="w-4 h-4 text-brand" />
                            </motion.div>
                        ) : (
-                           <ChevronRight className="w-4 h-4 text-white/40 group-hover/btn:text-brand-light transition-colors" />
+                           <ChevronRight className="w-4 h-4 text-gray-400 group-hover/btn:text-gray-600 transition-colors" />
                        )}
                      </button>
                   </>

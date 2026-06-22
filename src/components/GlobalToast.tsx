@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useAppStore } from '../store/useAppStore';
-import { Check, ShieldAlert, Bell } from 'lucide-react';
+import { Check, ShieldAlert, Bell, Activity } from 'lucide-react';
 import { cn } from '../lib/utils';
 // Note: audio is now played in the store, no need to play it here
 
@@ -11,30 +11,39 @@ export function GlobalToast() {
   return (
     <AnimatePresence>
       {toast && (
-        <motion.div
-            initial={{ opacity: 0, y: -40, scale: 0.9, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, y: 0, scale: 1, filter: 'blur(0px)' }}
-            exit={{ opacity: 0, y: -20, scale: 0.9, filter: 'blur(10px)' }}
-            transition={{ type: "spring", stiffness: 400, damping: 30 }}
-            className="fixed top-6 left-1/2 -translate-x-1/2 w-[90%] max-w-sm p-4 rounded-[1.5rem] bg-black/60 backdrop-blur-3xl border border-white/20 shadow-[0_20px_40px_rgba(0,0,0,0.5)] z-[100] flex items-center gap-4 overflow-hidden pointer-events-auto"
+          <motion.div
+            initial={{ opacity: 0, y: -50, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className="fixed top-2 left-4 right-4 md:left-1/2 md:right-auto md:-translate-x-1/2 md:w-[380px] p-3 rounded-[1.5rem] bg-white/90 backdrop-blur-3xl border border-black/5 shadow-2xl z-[200] flex items-start gap-3 overflow-hidden pointer-events-auto cursor-pointer"
             onClick={hideToast}
           >
-             <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-white/0 pointer-events-none" />
              <div className={cn(
-                 "w-10 h-10 rounded-full flex items-center justify-center shrink-0 border relative z-10",
-                 toast.type === 'error' ? 'bg-red-500/20 border-red-500/30 text-red-400 shadow-[0_0_15px_rgba(239,68,68,0.3)]' : 
-                 toast.type === 'success' ? 'bg-emerald-500/20 border-emerald-500/30 text-emerald-400 shadow-[0_0_15px_rgba(52,211,153,0.3)]' : 
-                 'bg-brand/20 border-brand/30 text-brand-light shadow-[0_0_15px_rgba(139,92,246,0.3)]'
+                 "w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 shadow-sm border",
+                 toast.type === 'error' ? 'bg-rose-50 text-rose-500 border-rose-100' : 
+                 toast.type === 'success' ? 'bg-emerald-50 text-emerald-500 border-emerald-100' : 
+                 'bg-brand/5 text-brand border-brand/10'
              )}>
                  {toast.type === 'error' && <ShieldAlert className="w-5 h-5" />}
                  {toast.type === 'success' && <Check className="w-5 h-5" strokeWidth={3} />}
                  {toast.type === 'info' && <Bell className="w-5 h-5" />}
              </div>
-             <div className="flex-1 relative z-10">
-                 <div className="text-[14px] font-bold text-white/90 tracking-wide drop-shadow-md">
-                   {toast.title || (toast.type === 'success' ? 'Success' : toast.type === 'error' ? 'Error' : 'Notification')}
-                 </div>
-                 <div className="text-[12px] text-white/60 mt-0.5">{toast.message}</div>
+             <div className="flex flex-col flex-1 pt-0.5 pb-1">
+                 {toast.title ? (
+                   <>
+                     <div className="text-[13px] font-black text-gray-900 tracking-wide uppercase">
+                       {toast.title}
+                     </div>
+                     <div className="text-xs text-gray-600 line-clamp-2 mt-0.5 leading-relaxed font-medium">
+                         {toast.message}
+                     </div>
+                   </>
+                 ) : (
+                   <div className="text-[13px] font-black text-gray-900 tracking-wide self-center pt-2.5">
+                       {toast.message}
+                   </div>
+                 )}
              </div>
         </motion.div>
       )}
