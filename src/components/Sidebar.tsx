@@ -70,18 +70,18 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       {currentUser?.photoUrl ? (
                         <img src={currentUser.photoUrl} alt="avatar" className="w-full h-full object-cover" />
                       ) : (
-                        <span className="text-lg font-bold tracking-tight text-brand">{currentUser?.firstName?.[0] || 'U'}</span>
+                        <span className="text-lg font-extrabold tracking-tight text-brand">{currentUser?.firstName?.[0] || 'U'}</span>
                       )}
                     </div>
                   </div>
                   <div>
-                    <h3 className="font-medium text-[15px] tracking-wide flex items-center gap-1.5 text-gray-900">
+                    <h3 className="font-bold text-[15px] tracking-wide flex items-center gap-1.5 text-gray-900">
                       {currentUser?.username?.toUpperCase() || currentUser?.firstName?.toUpperCase() || 'USER'}
-                      <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center text-[8px] font-bold">✓</span>
+                      <span className="w-3.5 h-3.5 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-[8px] font-extrabold">✓</span>
                     </h3>
                     <p 
                       onClick={handleIdClick}
-                      className="text-gray-400 text-[10px] font-mono cursor-pointer tracking-wider uppercase mt-0.5 hover:text-gray-600 transition-colors"
+                      className="text-gray-600 text-[10px] font-mono cursor-pointer tracking-wider font-bold uppercase mt-0.5 hover:text-gray-800 transition-colors"
                     >
                       ID: {currentUser?.id || '00000000'}
                     </p>
@@ -89,39 +89,39 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                 </div>
 
                 {/* Level Card */}
-                <div className="p-4 flex flex-col gap-1.5 relative overflow-hidden rounded-[1.25rem] bg-gray-50 border border-black/5 shadow-sm">
+                <div className="p-4 flex flex-col gap-1.5 relative overflow-hidden rounded-[1.25rem] bg-gray-100 border border-black/10 shadow-sm">
                   <div className="absolute top-0 right-0 w-20 h-20 bg-brand/10 blur-[30px] rounded-full pointer-events-none" />
-                  <span className="text-gray-500 text-[10px] tracking-[0.2em] uppercase font-bold">
+                  <span className="text-gray-700 text-[10px] tracking-[0.2em] uppercase font-extrabold">
                     Current Level
                   </span>
-                  <div className="text-[20px] font-mono font-medium tracking-tight text-gray-900 drop-shadow-sm">
-                    Lvl 1 <span className="text-gray-400 text-[12px] font-sans tracking-widest ml-1 uppercase font-bold">Novice</span>
+                  <div className="text-[20px] font-mono font-bold tracking-tight text-gray-900 drop-shadow-sm">
+                    Lvl 1 <span className="text-gray-600 text-[12px] font-sans tracking-widest ml-1 uppercase font-bold">Novice</span>
                   </div>
                 </div>
               </div>
 
-              <div className="h-[1px] bg-black/5 mx-5 my-4" />
+              <div className="h-[1px] bg-black/10 mx-5 my-4" />
 
               {/* Menu Items */}
               <div className="flex-1 px-3 py-2 flex flex-col gap-1 overflow-y-auto custom-scrollbar z-10">
                 <MenuButton icon={Languages} label={t(language, 'language')} onClick={() => setShowLang(true)} color="text-brand" />
-                <MenuButton icon={Info} label={t(language, 'company')} color="text-emerald-500" />
-                <MenuButton icon={Shield} label={t(language, 'legal')} color="text-amber-500" />
-                <MenuButton icon={BookOpen} label={t(language, 'tutorials')} color="text-indigo-500" />
+                <MenuButton icon={Info} label={t(language, 'company')} color="text-emerald-600" />
+                <MenuButton icon={Shield} label={t(language, 'legal')} color="text-amber-600" />
+                <MenuButton icon={BookOpen} label={t(language, 'tutorials')} color="text-indigo-600" />
               </div>
 
               {/* Footer */}
               <div className="p-5 pb-8 flex flex-col gap-3 z-10">
                 <button className="w-full bg-brand/10 hover:bg-brand/20 border border-brand/20 flex items-center justify-center gap-3 py-3.5 px-4 rounded-[1rem] text-brand group transition-all active:scale-[0.98] shadow-sm">
-                  <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={1.5} />
-                  <span className="font-bold text-[11px] tracking-widest uppercase">Support</span>
+                  <MessageCircle className="w-4 h-4 group-hover:scale-110 transition-transform" strokeWidth={2.5} />
+                  <span className="font-extrabold text-[11px] tracking-widest uppercase text-brand">Support</span>
                 </button>
                 <button 
                   onClick={() => { window.dispatchEvent(new CustomEvent('open-admin-direct')); onClose(); }}
-                  className="w-full bg-gray-50 hover:bg-gray-100 border border-black/5 flex items-center justify-center gap-3 py-3.5 px-4 rounded-[1rem] text-gray-500 group transition-all active:scale-[0.98] shadow-sm"
+                  className="w-full bg-gray-100 hover:bg-gray-200 border border-black/10 flex items-center justify-center gap-3 py-3.5 px-4 rounded-[1rem] text-gray-700 group transition-all active:scale-[0.98] shadow-sm"
                 >
-                  <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500" strokeWidth={1.5} />
-                  <span className="font-bold text-[11px] tracking-widest uppercase">Admin Panel</span>
+                  <Settings className="w-4 h-4 group-hover:rotate-90 transition-transform duration-500 text-gray-700" strokeWidth={2.5} />
+                  <span className="font-extrabold text-[11px] tracking-widest uppercase text-gray-800">Admin Panel</span>
                 </button>
               </div>
 
@@ -139,12 +139,12 @@ function MenuButton({ icon: Icon, label, onClick, color }: { icon: any, label: s
   return (
     <button 
       onClick={onClick}
-      className="flex items-center gap-3.5 px-4 py-3.5 w-full text-left text-gray-500 hover:text-gray-900 hover:bg-gray-50 rounded-[1rem] transition-all active:scale-[0.98] group"
+      className="flex items-center gap-3.5 px-4 py-3.5 w-full text-left font-bold text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-[1rem] transition-all active:scale-[0.98] group"
     >
-      <div className={cn("w-8 h-8 rounded-full bg-gray-50 border border-black/5 flex items-center justify-center group-hover:bg-white transition-colors shadow-sm", color)}>
-        <Icon className="w-4 h-4" strokeWidth={1.5} />
+      <div className={cn("w-8 h-8 rounded-full bg-gray-100 border border-black/10 flex items-center justify-center group-hover:bg-white transition-colors shadow-sm", color)}>
+        <Icon className="w-4 h-4" strokeWidth={2.5} />
       </div>
-      <span className="font-bold text-[11px] tracking-widest uppercase leading-tight group-hover:translate-x-1 transition-transform">{label}</span>
+      <span className="font-extrabold text-[11px] tracking-widest uppercase leading-tight group-hover:translate-x-1 transition-transform text-gray-800">{label}</span>
     </button>
   );
 }

@@ -73,8 +73,8 @@ export function LevelProgressComponent({ onClick }: Props) {
         </p>
         
         <div className="flex items-center justify-between text-[10px] uppercase tracking-widest font-mono border-t border-black/5 pt-1.5 relative">
-          <span className="text-brand font-black">{currentLevelXp} <span className="text-[8px] text-gray-400">XP</span></span>
-          <span className="text-gray-400 font-bold">{LEVEL_THRESHOLD} <span className="text-[8px]">XP</span></span>
+          <span className="text-brand font-black">{currentLevelXp} <span className="text-[8px] text-gray-400">FIFA Coin</span></span>
+          <span className="text-gray-400 font-bold">{LEVEL_THRESHOLD} <span className="text-[8px]">FIFA Coin</span></span>
           {onClick && <ChevronRight className="w-3 h-3 text-gray-400 absolute -right-3 top-2 opacity-0 group-hover:opacity-100 transition-opacity" />}
         </div>
       </div>

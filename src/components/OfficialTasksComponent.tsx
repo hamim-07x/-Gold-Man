@@ -146,7 +146,7 @@ export function OfficialTasksComponent() {
                        </div>
                        <div className="flex flex-col gap-0.5">
                            <span className="text-[12px] text-gray-800 font-bold tracking-wide">{task.title}</span>
-                           <span className="text-[10px] text-brand font-mono font-bold flex items-center gap-1 drop-shadow-sm">+{task.reward} XP</span>
+                           <span className="text-[10px] text-brand font-mono font-bold flex items-center gap-1 drop-shadow-sm">+{task.reward} FIFA Coin</span>
                        </div>
                      </div>
                      

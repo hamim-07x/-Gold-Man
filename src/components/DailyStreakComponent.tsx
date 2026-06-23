@@ -40,7 +40,7 @@ export function DailyStreakComponent() {
       initial={{opacity:0, y:10}} 
       animate={{opacity:1, y:0}} 
       transition={{delay: 0.15}}
-      className="p-4 rounded-3xl glass-card relative overflow-hidden mt-2 flex flex-col gap-3"
+      className="p-5 rounded-[1.5rem] bg-white/70 backdrop-blur-2xl border border-white/80 shadow-[0_4px_20px_rgb(0,0,0,0.03)] relative overflow-hidden mt-4 flex flex-col gap-4"
     >
       <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 blur-[40px] pointer-events-none" />
       
@@ -55,7 +55,7 @@ export function DailyStreakComponent() {
         </div>
       </div>
 
-      <div className="flex items-center justify-between bg-black/5 border border-black/5 p-2 rounded-2xl relative overflow-hidden group">
+      <div className="flex items-center justify-between bg-white/50 border border-white p-2.5 rounded-[1.2rem] relative overflow-hidden group shadow-sm">
         <div className="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/5 to-amber-500/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000" />
         <div className="flex items-center gap-2.5 z-10 w-full pr-2">
           <div className="w-8 h-8 rounded-xl bg-amber-500/10 flex items-center justify-center border border-amber-500/20 shrink-0">
@@ -63,7 +63,7 @@ export function DailyStreakComponent() {
           </div>
           <div className="flex flex-col flex-1 min-w-0">
             <span className="text-[9px] uppercase text-gray-500 tracking-[0.2em] font-bold mb-0.5 truncate">Next Reward</span>
-            <span className="text-[11px] font-mono text-gray-900 font-bold">+{nextReward} XP</span>
+            <span className="text-[11px] font-mono text-gray-900 font-bold">+{nextReward} FIFA Coin</span>
           </div>
         </div>
 

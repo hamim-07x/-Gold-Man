@@ -174,34 +174,42 @@ export default function App() {
   };
 
   return (
-    <div className="relative min-h-[100dvh] bg-[#f5f5f7] text-gray-900 selection:bg-brand/20 overflow-hidden">
+    <div className={cn(
+      "relative min-h-[100dvh] text-gray-900 selection:bg-brand/20 overflow-hidden shadow-2xl pb-safe-bottom",
+      currentTab === 'admin' ? "w-full bg-[#0A0A0F]" : "max-w-md mx-auto bg-slate-50"
+    )}>
       <GlobalToast />
       
-      {/* Background Ambient Glows */}
-      <div className="absolute top-[-10%] left-[-10%] w-[300px] h-[300px] bg-brand rounded-full blur-[80px] opacity-10 pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[300px] h-[300px] bg-brand-light rounded-full blur-[80px] opacity-10 pointer-events-none" />
+      {/* Background Ambient Glows (iOS 26 water like blur) */}
+      {currentTab !== 'admin' && (
+        <>
+      <div className="absolute top-[-15%] left-[-20%] w-[400px] h-[400px] bg-brand/30 rounded-full blur-[100px] opacity-60 pointer-events-none mix-blend-multiply" />
+      <div className="absolute top-[30%] right-[-20%] w-[350px] h-[350px] bg-accent/20 rounded-full blur-[120px] opacity-50 pointer-events-none mix-blend-multiply" />
+      <div className="absolute bottom-[-10%] left-[20%] w-[350px] h-[350px] bg-brand-light/20 rounded-full blur-[100px] opacity-50 pointer-events-none mix-blend-multiply" />
 
       {/* Top Bar */}
-      <div className="fixed top-0 left-0 right-0 px-4 pt-safe-top pb-3 h-[60px] flex justify-between items-end z-40 bg-white/70 backdrop-blur-2xl border-b border-black/5 shadow-sm">
+      <div className="fixed top-0 left-0 right-0 px-4 pt-safe-top pb-3 h-[60px] flex justify-between items-end z-40 bg-white/60 backdrop-blur-3xl border-b border-black/[0.03] shadow-[0_2px_20px_rgb(0,0,0,0.02)] max-w-md mx-auto">
         <button 
           onClick={() => { playClickSound(); setSidebarOpen(true); }}
-          className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all bg-white hover:bg-gray-50 rounded-[0.8rem] border border-black/5 shadow-sm"
+          className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all bg-white/70 backdrop-blur-md hover:bg-white rounded-[1rem] border border-black/5 shadow-sm"
         >
           <Menu className="w-5 h-5" strokeWidth={2} />
         </button>
         <div className="flex flex-col items-center justify-center mb-0.5">
-          <span className="text-[9px] text-brand font-mono font-bold tracking-[0.3em] uppercase">System Access</span>
-          <span className="font-black text-xs tracking-[0.2em] text-gray-900 uppercase mt-0.5">
+          <span className="text-[9px] text-brand font-mono font-bold tracking-[0.3em] uppercase">Epoch OS</span>
+          <span className="font-black text-sm tracking-[0.1em] text-gray-900 mt-0.5">
             {getTabTitle()}
           </span>
         </div>
-        <button onClick={() => { playClickSound(); setShowNotifications(true); }} className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all bg-white hover:bg-gray-50 rounded-[0.8rem] border border-black/5 shadow-sm relative">
+        <button onClick={() => { playClickSound(); setShowNotifications(true); }} className="w-9 h-9 flex items-center justify-center text-gray-600 hover:text-gray-900 transition-all bg-white/70 backdrop-blur-md hover:bg-white rounded-[1rem] border border-black/5 shadow-sm relative">
           <Bell className="w-4 h-4" strokeWidth={2} />
           {notifications.length > 0 && (
             <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-brand rounded-full border-[1.5px] border-white shadow-[0_0_8px_theme(colors.brand.DEFAULT)] animate-pulse" />
           )}
         </button>
       </div>
+      </>
+      )}
 
       {/* Main Content Area */}
       <main 
@@ -275,11 +283,11 @@ export default function App() {
                                      const newEvents = currentEvents.filter((e: any) => e.id !== ev.id);
                                      localStorage.setItem('fake_db_events', JSON.stringify(newEvents));
                                      useAppStore.getState().updateBalance(ev.reward, 'earn', 'XP');
-                                     useAppStore.getState().showToast(`Claimed ${ev.reward} XP from ${ev.title}`, 'success');
+                                     useAppStore.getState().showToast(`Claimed ${ev.reward} FIFA Coin from ${ev.title}`, 'success');
                                      window.dispatchEvent(new Event('storage'));
                                    }}
                                    className="shrink-0 bg-white hover:bg-gray-100 active:scale-95 px-4 py-2.5 text-[11px] rounded-[1rem] text-brand tracking-widest font-black shadow-sm border border-black/5 transition-all text-center">
-                                   Claim {ev.reward}XP
+                                   Claim {ev.reward} FIFA Coin
                                 </button>
                              </div>
                            ))

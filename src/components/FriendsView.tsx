@@ -20,10 +20,10 @@ export function FriendsView() {
   const friendsCount = currentUser?.referralsCount || 0;
 
   const tiers = [
-      { level: 1, req: 1, reward: 1000, name: 'Novice Recruiter', icon: Shield, color: 'from-blue-100 to-blue-200', text: 'text-blue-600', iconColor: 'text-blue-500' },
-      { level: 2, req: 5, reward: 10000, name: 'Network Builder', icon: Star, color: 'from-brand/10 to-glow-pink/10', text: 'text-brand', iconColor: 'text-brand' },
-      { level: 3, req: 20, reward: 50000, name: 'Elite Captain', icon: Gem, color: 'from-emerald-100 to-emerald-200', text: 'text-emerald-600', iconColor: 'text-emerald-500' },
-      { level: 4, req: 50, reward: 200000, name: 'Global Ambassador', icon: Crown, color: 'from-amber-100 to-amber-200', text: 'text-amber-600', iconColor: 'text-amber-500' },
+      { level: 1, req: 1, reward: 1000, name: 'Novice Recruiter', icon: Shield, color: 'from-accent/10 to-accent/20', text: 'text-accent', iconColor: 'text-accent' },
+      { level: 2, req: 5, reward: 10000, name: 'Network Builder', icon: Star, color: 'from-brand/10 to-brand/20', text: 'text-brand', iconColor: 'text-brand' },
+      { level: 3, req: 20, reward: 50000, name: 'Elite Captain', icon: Gem, color: 'from-[#00B14F]/10 to-[#00B14F]/20', text: 'text-[#00B14F]', iconColor: 'text-[#00B14F]' },
+      { level: 4, req: 50, reward: 200000, name: 'Global Ambassador', icon: Crown, color: 'from-[#EEA013]/10 to-[#EEA013]/20', text: 'text-[#EEA013]', iconColor: 'text-[#EEA013]' },
   ];
 
   useEffect(() => {
@@ -153,7 +153,7 @@ export function FriendsView() {
                              </div>
                              <div className="flex flex-col flex-1">
                                  <span className={cn("text-[13px] font-black uppercase tracking-widest", isUnlocked ? tier.text : "text-gray-400")}>{tier.name}</span>
-                                 <span className="text-[11px] text-brand font-mono font-bold mt-0.5">+{tier.reward.toLocaleString()} XP Bounty</span>
+                                 <span className="text-[11px] text-brand font-mono font-bold mt-0.5">+{tier.reward.toLocaleString()} FIFA Coin Bounty</span>
                              </div>
                              {isUnlocked && (
                                  <div className="w-8 h-8 rounded-full bg-emerald-100 text-emerald-500 flex items-center justify-center shrink-0 border border-emerald-200">
@@ -243,7 +243,7 @@ export function FriendsView() {
                      <li className="pl-6 relative">
                          <div className="absolute w-5 h-5 bg-white rounded-full -left-[10.5px] border-[3px] border-brand flex items-center justify-center shadow-sm" />
                          <h3 className="text-[13px] font-black text-gray-900 mb-2">3. Extract Commission</h3>
-                         <p className="text-[11px] text-gray-600 font-bold leading-relaxed normal-case">Instantly receive a substantial XP bounty upon their initial sync, plus a fixed percentage of all their future yields forever.</p>
+                         <p className="text-[11px] text-gray-600 font-bold leading-relaxed normal-case">Instantly receive a substantial FIFA Coin bounty upon their initial sync, plus a fixed percentage of all their future yields forever.</p>
                      </li>
                  </ol>
              </div>

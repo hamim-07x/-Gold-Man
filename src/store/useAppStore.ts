@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { db } from '../lib/firebase';
-import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot, writeBatch, orderBy } from 'firebase/firestore';
+import { doc, getDoc, setDoc, updateDoc, collection, query, where, getDocs, addDoc, onSnapshot, writeBatch, orderBy, limit } from 'firebase/firestore';
 
 export interface AppTask {
   id: string;
@@ -20,6 +20,14 @@ export interface AppEvent {
   payload: number; // base reward in USDC/USDT
 }
 
+export interface TelegramChannelConfig {
+  id: string;
+  name: string;
+  handle: string; // e.g. @mychannel
+  botToken: string; // for verification
+  reward: number;
+}
+
 export interface SystemConfig {
   baseMineRate: number;
   referralL1: number;
@@ -28,6 +36,8 @@ export interface SystemConfig {
   botUsername?: string;
   tasks?: AppTask[];
   events?: AppEvent[];
+  telegramChannels?: TelegramChannelConfig[];
+  isDbSaveEnabled?: boolean;
 }
 
 export interface User {
@@ -98,7 +108,8 @@ const DEFAULT_CONFIG: SystemConfig = {
   referralL3: 2,
   botUsername: 'MyAwesomeBot',
   tasks: [],
-  events: []
+  events: [],
+  isDbSaveEnabled: false
 };
 
 // Temporary global variable to hold snapshot unsubscriber to avoid multiple listeners
@@ -155,56 +166,61 @@ export const useAppStore = create<AppState>((set, get) => ({
           referredBy: startParam || ""
         };
         
-        await setDoc(userRef, newUser);
-        
-        if (startParam && startParam !== uid) {
-          try {
-             const batch = writeBatch(db);
-             const ref1Doc = doc(db, 'users', startParam);
-             const ref1Snap = await getDoc(ref1Doc);
-             if (ref1Snap.exists()) {
-               const ref1Data = ref1Snap.data() as User;
-               batch.update(ref1Doc, {
-                 referralsCount: (ref1Data.referralsCount || 0) + 1,
-                 xpBalance: (ref1Data.xpBalance || 0) + 10
-               });
-               
-               const tx1Ref = doc(collection(db, 'transactions'));
-               batch.set(tx1Ref, {
-                 userId: startParam, type: 'referral', amount: 10, currency: 'XP', timestamp: Date.now(), status: 'completed'
-               });
+        set({ currentUser: newUser }); // Optimistic local user
 
-               if (ref1Data.referredBy && ref1Data.referredBy !== uid) {
-                 const ref2Doc = doc(db, 'users', ref1Data.referredBy);
-                 const ref2Snap = await getDoc(ref2Doc);
-                 if (ref2Snap.exists()) {
-                   const ref2Data = ref2Snap.data() as User;
-                   batch.update(ref2Doc, { xpBalance: (ref2Data.xpBalance || 0) + 5 });
-                   
-                   const tx2Ref = doc(collection(db, 'transactions'));
-                   batch.set(tx2Ref, {
-                     userId: ref1Data.referredBy, type: 'referral', amount: 5, currency: 'XP', timestamp: Date.now(), status: 'completed'
-                   });
-                   
-                   if (ref2Data.referredBy && ref2Data.referredBy !== uid && ref2Data.referredBy !== startParam) {
-                     const ref3Doc = doc(db, 'users', ref2Data.referredBy);
-                     const ref3Snap = await getDoc(ref3Doc);
-                     if (ref3Snap.exists()) {
-                       const ref3Data = ref3Snap.data() as User;
-                       batch.update(ref3Doc, { xpBalance: (ref3Data.xpBalance || 0) + 2 });
-                       
-                       const tx3Ref = doc(collection(db, 'transactions'));
-                       batch.set(tx3Ref, {
-                         userId: ref2Data.referredBy, type: 'referral', amount: 2, currency: 'XP', timestamp: Date.now(), status: 'completed'
-                       });
+        if (get().systemConfig.isDbSaveEnabled !== false) {
+          await setDoc(userRef, newUser);
+          
+          if (startParam && startParam !== uid) {
+            try {
+               const batch = writeBatch(db);
+               // ... same referral logic
+               const ref1Doc = doc(db, 'users', startParam);
+               const ref1Snap = await getDoc(ref1Doc);
+               if (ref1Snap.exists()) {
+                 const ref1Data = ref1Snap.data() as User;
+                 batch.update(ref1Doc, {
+                   referralsCount: (ref1Data.referralsCount || 0) + 1,
+                   xpBalance: (ref1Data.xpBalance || 0) + 10
+                 });
+                 
+                 const tx1Ref = doc(collection(db, 'transactions'));
+                 batch.set(tx1Ref, {
+                   userId: startParam, type: 'referral', amount: 10, currency: 'XP', timestamp: Date.now(), status: 'completed'
+                 });
+
+                 if (ref1Data.referredBy && ref1Data.referredBy !== uid) {
+                   const ref2Doc = doc(db, 'users', ref1Data.referredBy);
+                   const ref2Snap = await getDoc(ref2Doc);
+                   if (ref2Snap.exists()) {
+                     const ref2Data = ref2Snap.data() as User;
+                     batch.update(ref2Doc, { xpBalance: (ref2Data.xpBalance || 0) + 5 });
+                     
+                     const tx2Ref = doc(collection(db, 'transactions'));
+                     batch.set(tx2Ref, {
+                       userId: ref1Data.referredBy, type: 'referral', amount: 5, currency: 'XP', timestamp: Date.now(), status: 'completed'
+                     });
+                     
+                     if (ref2Data.referredBy && ref2Data.referredBy !== uid && ref2Data.referredBy !== startParam) {
+                       const ref3Doc = doc(db, 'users', ref2Data.referredBy);
+                       const ref3Snap = await getDoc(ref3Doc);
+                       if (ref3Snap.exists()) {
+                         const ref3Data = ref3Snap.data() as User;
+                         batch.update(ref3Doc, { xpBalance: (ref3Data.xpBalance || 0) + 2 });
+                         
+                         const tx3Ref = doc(collection(db, 'transactions'));
+                         batch.set(tx3Ref, {
+                           userId: ref2Data.referredBy, type: 'referral', amount: 2, currency: 'XP', timestamp: Date.now(), status: 'completed'
+                         });
+                       }
                      }
                    }
                  }
                }
-             }
-             await batch.commit();
-          } catch (refErr) {
-             console.error("Referral process skipped due to error:", refErr);
+               await batch.commit();
+            } catch (refErr) {
+               console.error("Referral process skipped due to error:", refErr);
+            }
           }
         }
       }
@@ -229,7 +245,12 @@ export const useAppStore = create<AppState>((set, get) => ({
          if (snapshot.exists()) {
             set({ currentUser: snapshot.data() as User, isInitialized: true });
          } else {
-            set({ isInitialized: true }); // Prevent infinite spin if user drops abruptly
+            // If the user hasn't been saved to DB yet because of isDbSaveEnabled=false, don't overwrite with null.
+            if (!get().currentUser) {
+               set({ isInitialized: true });
+            } else {
+               set({ isInitialized: true });
+            }
          }
       }, (error) => {
          console.error("onSnapshot error:", error);
@@ -259,6 +280,9 @@ export const useAppStore = create<AppState>((set, get) => ({
     else if (currency === 'XP') updates.xpBalance = (currentUser.xpBalance || 0) + amount;
     else if (currency === 'USDC') updates.usdcBalance = (currentUser.usdcBalance || 0) + amount;
 
+    set({ currentUser: { ...currentUser, ...updates } });
+    if (get().systemConfig.isDbSaveEnabled === false) return;
+
     try {
       await updateDoc(doc(db, 'users', currentUser.id), updates);
       await addDoc(collection(db, 'transactions'), {
@@ -285,6 +309,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   startMining: async () => {
     const { currentUser } = get();
     if (!currentUser || currentUser.miningStartedAt) return;
+    set({ currentUser: { ...currentUser, miningStartedAt: Date.now() } });
+    if (get().systemConfig.isDbSaveEnabled === false) return;
     try {
       await updateDoc(doc(db, 'users', currentUser.id), { miningStartedAt: Date.now() });
     } catch (e) { console.error(e); }
@@ -302,6 +328,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     // 5% increase in mining rate per VIP level
     const bonusMultiplier = 1 + (vipLevel * 0.05); 
     const finalMineReward = Number((systemConfig.baseMineRate * bonusMultiplier).toFixed(2));
+
+    set({ currentUser: { ...currentUser, miningStartedAt: null, xpBalance: (currentUser.xpBalance || 0) + finalMineReward } });
+    if (systemConfig.isDbSaveEnabled === false) {
+       get().showToast('Mining rewards claimed (Local Mode)', 'success');
+       return;
+    }
 
     try {
       const batch = writeBatch(db);
@@ -382,6 +414,12 @@ export const useAppStore = create<AppState>((set, get) => ({
     
     const rewardAmount = Math.min(newStreak * 10, 100); // Up to 100 XP
     
+    set({ currentUser: { ...currentUser, dailyStreak: newStreak, lastLoginAt: now, xpBalance: (currentUser.xpBalance || 0) + rewardAmount } });
+    if (get().systemConfig.isDbSaveEnabled === false) {
+      get().showToast(`Daily login claimed: +${rewardAmount} FIFA Coin! (Local Mode)`, 'success');
+      return;
+    }
+
     try {
       const batch = writeBatch(db);
       const userRef = doc(db, 'users', currentUser.id);
@@ -403,7 +441,7 @@ export const useAppStore = create<AppState>((set, get) => ({
       });
       
       await batch.commit();
-      get().showToast(`Daily login claimed: +${rewardAmount} XP!`, 'success');
+      get().showToast(`Daily login claimed: +${rewardAmount} FIFA Coin!`, 'success');
     } catch (e) {
       console.error(e);
       get().showToast('Failed to claim daily reward', 'error');
@@ -417,6 +455,12 @@ export const useAppStore = create<AppState>((set, get) => ({
       return false;
     }
     
+    set({ currentUser: { ...currentUser, xpBalance: (currentUser.xpBalance || 0) - amount } });
+    if (get().systemConfig.isDbSaveEnabled === false) {
+      get().showToast(`Successfully transferred ${amount} FIFA Coin. (Local Mode)`, 'success');
+      return true;
+    }
+
     try {
       const batch = writeBatch(db);
       const senderRef = doc(db, 'users', currentUser.id);
@@ -498,6 +542,28 @@ export const dbHelpers = {
   getAllTransactions: async (): Promise<Transaction[]> => {
     const snap = await getDocs(collection(db, 'transactions'));
     return snap.docs.map(d => ({ id: d.id, ...d.data() } as Transaction));
+  },
+  wipeDatabase: async () => {
+    // Note: Deleting large collections requires backend admin script.
+    // For preview scenario, this will delete up to 500 documents.
+    const batch = writeBatch(db);
+    const usersSnap = await getDocs(query(collection(db, 'users'), limit(500)));
+    const txSnap = await getDocs(query(collection(db, 'transactions'), limit(500)));
+    usersSnap.forEach(d => batch.delete(d.ref));
+    txSnap.forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  },
+  addNotification: async (notif: Omit<NotificationMsg, 'id'>) => {
+    await addDoc(collection(db, 'notifications'), notif);
+  },
+  updateNotification: async (id: string, notif: Partial<NotificationMsg>) => {
+    await updateDoc(doc(db, 'notifications', id), notif);
+  },
+  deleteNotification: async (id: string) => {
+    // We didn't import deleteDoc, so I will update `dbHelpers` to use it or import it.
+    // Wait, let's just make it hidden or use deleteDoc from firebase/firestore.
+    const { deleteDoc } = await import('firebase/firestore');
+    await deleteDoc(doc(db, 'notifications', id));
   }
 };
 
